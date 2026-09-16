@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fafaf9;
+  --surface: #ffffff;
+  --foreground: #0a0a0a;
+  --muted: #6b6b6b;
+  --muted-2: #8f8f8f;
+  --border: #e4e4e1;
+  --border-strong: #d4d4d0;
+  --accent: #0a0a0a;
+  --accent-foreground: #ffffff;
+
+  --verified: #166534;
+  --verified-bg: #f0fdf4;
+  --unverified: #92400e;
+  --unverified-bg: #fffbeb;
+  --restricted: #991b1b;
+  --restricted-bg: #fef2f2;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-2: var(--muted-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-verified: var(--verified);
+  --color-verified-bg: var(--verified-bg);
+  --color-unverified: var(--unverified);
+  --color-unverified-bg: var(--unverified-bg);
+  --color-restricted: var(--restricted);
+  --color-restricted-bg: var(--restricted-bg);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.pulse-dot {
+  animation: pulse-dot 1.6s ease-in-out infinite;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.35s ease-out both;
+}
