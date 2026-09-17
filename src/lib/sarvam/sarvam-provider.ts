@@ -34,14 +34,14 @@ export class SarvamVoiceProvider implements VoiceProvider {
           connection_id: config.connectionId,
           agent_phone_number: config.agentPhoneNumber,
         },
+        agent_variables: {
+          agent_instructions: instructions,
+          project_id: params.projectContext.projectId,
+          project_name: params.projectContext.projectName,
+        },
       },
       user_config: {
         user_phone_number: params.phoneNumber,
-      },
-      agent_variables: {
-        agent_instructions: instructions,
-        project_id: params.projectContext.projectId,
-        project_name: params.projectContext.projectName,
       },
       webhook_config: {
         url: config.webhookUrl,
@@ -53,7 +53,8 @@ export class SarvamVoiceProvider implements VoiceProvider {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "api-subscription-key": config.apiKey,
+        // Conversations / Instant Outbound auth (not the speech API's api-subscription-key).
+        "X-API-Key": config.apiKey,
       },
       body: JSON.stringify(body),
     });
@@ -64,7 +65,11 @@ export class SarvamVoiceProvider implements VoiceProvider {
     }
 
     const data = (await response.json()) as { attempt_id: string };
-    return { providerCallId: data.attempt_id, interactionId: null, status: "initiating" };
+    if (!data.attempt_id) {
+      throw new Error("Sarvam createCall succeeded but returned no attempt_id.");
+    }
+    // Sarvam accepted the outbound; live ringing/in-call state is not pollable.
+    return { providerCallId: data.attempt_id, interactionId: null, status: "ringing" };
   }
 
   async getCallStatus(_providerCallId: string): Promise<CallStatusResult | null> {

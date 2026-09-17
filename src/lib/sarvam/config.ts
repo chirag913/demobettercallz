@@ -31,6 +31,19 @@ export function getSarvamConfig(): SarvamConfig | null {
     return null;
   }
 
+  let webhookUrl: URL;
+  try {
+    webhookUrl = new URL(`${appUrl.replace(/\/$/, "")}/api/webhooks/sarvam`);
+  } catch {
+    return null;
+  }
+  const webhookSecret = process.env.SARVAM_WEBHOOK_SECRET;
+  // Sarvam does not document HMAC signing. If we set a shared secret, attach it
+  // to the per-call webhook URL so Sarvam's POST includes it as ?secret=.
+  if (webhookSecret) {
+    webhookUrl.searchParams.set("secret", webhookSecret);
+  }
+
   return {
     apiKey,
     appId,
@@ -38,8 +51,8 @@ export function getSarvamConfig(): SarvamConfig | null {
     orgId,
     workspaceId,
     connectionId,
-    appVersion: Number(process.env.SARVAM_APP_VERSION ?? "1"),
-    webhookUrl: `${appUrl.replace(/\/$/, "")}/api/webhooks/sarvam`,
+    appVersion: Number(process.env.SARVAM_APP_VERSION ?? "1") || 1,
+    webhookUrl: webhookUrl.toString(),
   };
 }
 

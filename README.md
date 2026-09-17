@@ -97,9 +97,13 @@ extra `SARVAM_ORG_ID` / `SARVAM_WORKSPACE_ID` / `SARVAM_CONNECTION_ID` vars are 
 itself and are documented here per the brief's own instruction to document any additional configuration
 Sarvam requires.
 
+Authentication for Instant Outbound is the Conversations API header `X-API-Key` (this is **not** the
+speech/text `api-subscription-key` header).
+
 `SARVAM_WEBHOOK_SECRET` is optional — Sarvam does not document a signature/HMAC header for verifying
-webhook authenticity, so this is a shared-secret convention: set it, then register your webhook URL with
-`?secret=<value>` appended wherever Sarvam's dashboard lets you configure the callback.
+webhook authenticity, so this is a shared-secret convention. When it is set, each outbound request
+automatically appends `?secret=<value>` to `webhook_config.url`. You do not need a separate dashboard
+webhook registration for Instant Outbound; Sarvam POSTs to the URL supplied on that call.
 
 **Important limitation, documented honestly rather than worked around:** Sarvam does not publish a
 polling endpoint for live call status, nor does its completion webhook include a recording URL. This
