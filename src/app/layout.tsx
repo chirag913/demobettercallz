@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BetterCallz AI — AI Sales Intelligence for Real Estate",
-  description: "Turn every real-estate project into an AI property expert.",
+  title: "AI Sales Intelligence for Investors Clinic — Powered by BetterCallz",
+  description: "Turn every lead conversation into sales intelligence.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

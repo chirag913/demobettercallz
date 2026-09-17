@@ -82,37 +82,41 @@ export default async function ProjectPreviewPage({ params }: { params: Promise<{
         </div>
       </section>
 
-      <Section id="overview" eyebrow="Overview" title="A landmark address on Dwarka Expressway">
+      <Section id="overview" eyebrow="Overview" title={project.tagline}>
         <p className="max-w-2xl text-[var(--muted)]">{project.heroDescription}</p>
       </Section>
 
-      <Section id="residences" eyebrow="Residences" title="Configurations">
-        <div className="grid gap-4 sm:grid-cols-3">
-          {inventory.map((unit) => (
-            <div key={unit.id} className="rounded-[var(--radius-md)] border border-[var(--border)] p-5">
-              <div className="text-base font-semibold">{unit.configuration}</div>
-              <div className="mt-1 text-sm text-[var(--muted)]">{unit.areaSqft}</div>
-              <div className="mt-3 text-sm font-medium">
-                {unit.verificationStatus === "restricted" ? "Price on request" : unit.priceRange}
+      {inventory.length > 0 && (
+        <Section id="residences" eyebrow="Residences" title="Configurations">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {inventory.map((unit) => (
+              <div key={unit.id} className="rounded-[var(--radius-md)] border border-[var(--border)] p-5">
+                <div className="text-base font-semibold">{unit.configuration}</div>
+                <div className="mt-1 text-sm text-[var(--muted)]">{unit.areaSqft}</div>
+                <div className="mt-3 text-sm font-medium">
+                  {unit.verificationStatus === "restricted" ? "Price on request" : unit.priceRange}
+                </div>
+                <div className="mt-1 text-[12px] uppercase tracking-wide text-[var(--muted-2)]">
+                  {unit.status === "available" ? "Available" : unit.status === "limited" ? "Limited availability" : "Sold out"}
+                </div>
               </div>
-              <div className="mt-1 text-[12px] uppercase tracking-wide text-[var(--muted-2)]">
-                {unit.status === "available" ? "Available" : unit.status === "limited" ? "Limited availability" : "Sold out"}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
+            ))}
+          </div>
+        </Section>
+      )}
 
-      <Section id="amenities" eyebrow="Amenities" title="Designed for everyday living">
-        <div className="grid gap-4 sm:grid-cols-2">
-          {byCategory.amenities.map((fact) => (
-            <div key={fact.id} className="rounded-[var(--radius-md)] border border-[var(--border)] p-5">
-              <div className="text-[11px] uppercase tracking-wide text-[var(--muted-2)]">{fact.label}</div>
-              <div className="mt-1.5 text-[15px]">{fact.value}</div>
-            </div>
-          ))}
-        </div>
-      </Section>
+      {byCategory.amenities.length > 0 && (
+        <Section id="amenities" eyebrow="Amenities" title="Designed for everyday living">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {byCategory.amenities.map((fact) => (
+              <div key={fact.id} className="rounded-[var(--radius-md)] border border-[var(--border)] p-5">
+                <div className="text-[11px] uppercase tracking-wide text-[var(--muted-2)]">{fact.label}</div>
+                <div className="mt-1.5 text-[15px]">{fact.value}</div>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <Section id="location" eyebrow="Location" title={project.location}>
         <p className="max-w-2xl text-[var(--muted)]">

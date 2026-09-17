@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { isRealMode } from "@/lib/sarvam";
 import { cn } from "@/lib/utils";
+import { DEMO_PROJECT_ID } from "@/data/demoProject";
 
 function ModeIndicator() {
   const real = isRealMode();
@@ -23,7 +24,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="hidden items-center gap-8 text-sm text-[var(--muted)] md:flex">
             <Link href="/" className="hover:text-[var(--foreground)]">Overview</Link>
             <Link href="/projects" className="hover:text-[var(--foreground)]">Projects</Link>
-            <Link href="/projects/godrej-arden" className="hover:text-[var(--foreground)]">Demo</Link>
+            <Link href={`/projects/${DEMO_PROJECT_ID}`} className="hover:text-[var(--foreground)]">Demo</Link>
           </nav>
           <ModeIndicator />
         </div>

@@ -34,15 +34,20 @@ function findFactValue(context: ProjectContext, label: string): string | null {
 
 export function buildDemoTranscript(context: ProjectContext): TranscriptTurn[] {
   const configurations = findFactValue(context, "Configurations") ?? context.configurations;
-  const startingPrice = findFactValue(context, "Starting Price") ?? "the starting price";
-  const possession = findFactValue(context, "Possession") ?? "the possession date";
+  const startingPrice = findFactValue(context, "Starting Price");
+  const possession = findFactValue(context, "Possession");
+
+  const priceLine = startingPrice && !/request/i.test(startingPrice)
+    ? `${startingPrice} se starting hai — exact configuration ke hisaab se price vary karega.`
+    : "Abhi current pricing ki verified information available nahi hai — main aapko humare sales team se confirm karwa doon?";
+  const possessionLine = possession && !/request/i.test(possession) ? ` Possession ${possession} hai.` : "";
 
   const turns: TranscriptTurn[] = [
     { speaker: "agent", text: `Namaste! Main ${context.projectName} ki AI property expert bol rahi hoon. Kaise madad kar sakti hoon aaj?`, timestampSeconds: 0 },
     { speaker: "prospect", text: "Hi, mujhe thoda sa project ke baare mein jaanna tha.", timestampSeconds: 3 },
     { speaker: "agent", text: `Bilkul! ${context.projectName} ${context.developer} ka project hai, located at ${context.location}. Yahan ${configurations} available hain.`, timestampSeconds: 6 },
     { speaker: "prospect", text: "Price kya hai iska?", timestampSeconds: 12 },
-    { speaker: "agent", text: `${startingPrice} se starting hai — exact configuration ke hisaab se price vary karega. Possession ${possession} hai.`, timestampSeconds: 15 },
+    { speaker: "agent", text: `${priceLine}${possessionLine}`, timestampSeconds: 15 },
     { speaker: "prospect", text: "Is there a private golf course inside the project?", timestampSeconds: 20 },
     { speaker: "agent", text: AGENT_REFUSAL_LINE + " Main aapko is par humare sales team se confirm karwa doon?", timestampSeconds: 22 },
     { speaker: "prospect", text: "Sure, that works. Thanks!", timestampSeconds: 27 },
