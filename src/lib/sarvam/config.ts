@@ -15,12 +15,15 @@ export interface SarvamConfig {
   workspaceId: string;
   connectionId: string;
   /**
-   * null tracks the agent's latest committed version at call time (Sarvam's
-   * documented behavior for app_version: null). Set SARVAM_APP_VERSION to
-   * pin an explicit version instead once production behavior should only
-   * change on your own schedule.
+   * null tracks the agent's latest committed version at call time. Sarvam
+   * requires this to be paired with versionFilter: "latest_committed" —
+   * sending app_version: null alone 422s with "app_version is required
+   * when version_filter is specific" (version_filter defaults to
+   * "specific"). Set SARVAM_APP_VERSION to pin an explicit version instead
+   * once production behavior should only change on your own schedule.
    */
   appVersion: number | null;
+  versionFilter: "latest_committed" | "specific";
   webhookUrl: string;
 }
 
@@ -43,6 +46,8 @@ export function getSarvamConfig(): SarvamConfig | null {
   } catch {
     return null;
   }
+  const pinnedVersion = process.env.SARVAM_APP_VERSION ? Number(process.env.SARVAM_APP_VERSION) || null : null;
+
   const webhookSecret = process.env.SARVAM_WEBHOOK_SECRET;
   // Sarvam does not document HMAC signing. If we set a shared secret, attach it
   // to the per-call webhook URL so Sarvam's POST includes it as ?secret=.
@@ -57,7 +62,8 @@ export function getSarvamConfig(): SarvamConfig | null {
     orgId,
     workspaceId,
     connectionId,
-    appVersion: process.env.SARVAM_APP_VERSION ? Number(process.env.SARVAM_APP_VERSION) || null : null,
+    appVersion: pinnedVersion,
+    versionFilter: pinnedVersion === null ? "latest_committed" : "specific",
     webhookUrl: webhookUrl.toString(),
   };
 }

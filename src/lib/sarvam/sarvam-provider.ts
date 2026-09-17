@@ -30,6 +30,7 @@ export class SarvamVoiceProvider implements VoiceProvider {
       app_config: {
         app_id: config.appId,
         app_version: config.appVersion,
+        version_filter: config.versionFilter,
         app_type: "agent",
         connection_config: {
           connection_id: config.connectionId,
