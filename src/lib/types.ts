@@ -1,5 +1,7 @@
 // Core domain types shared across the app, API routes, and the Sarvam provider layer.
 
+import type { ConversationIntelligence } from "@/lib/intelligence/types";
+
 export type VerificationStatus = "verified" | "unverified" | "restricted";
 
 export type KnowledgeCategory = "project" | "pricing" | "amenities" | "inventory";
@@ -92,6 +94,7 @@ export interface CallRecord {
   failureReason: string | null;
   startedAt: string | null;
   endedAt: string | null;
+  conversationIntelligence: ConversationIntelligence | null;
   createdAt: string;
   updatedAt: string;
 }

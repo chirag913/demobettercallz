@@ -2,8 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Loader2, PhoneMissed, PhoneOutgoing } from "lucide-react";
+import {
+  ConversationIntelligenceError,
+  ConversationIntelligenceLoading,
+  ConversationIntelligenceView,
+} from "@/components/calls/conversation-intelligence";
 import type { CallRecord, CallState } from "@/lib/types";
 
 const STATE_MESSAGE: Record<CallState, string> = {
@@ -26,7 +30,33 @@ function formatDuration(seconds: number | null) {
 export function CallResult({ callId }: { callId: string }) {
   const [call, setCall] = useState<CallRecord | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [intelligenceStatus, setIntelligenceStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [intelligenceError, setIntelligenceError] = useState<string | null>(null);
+  const intelligenceRequestedRef = useRef(false);
+  const transcriptRef = useRef<HTMLDivElement | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function runIntelligenceAnalysis(id: string, options?: { regenerate?: boolean }) {
+    intelligenceRequestedRef.current = true;
+    setIntelligenceStatus("loading");
+    setIntelligenceError(null);
+    try {
+      const res = await fetch(`/api/calls/${id}/intelligence${options?.regenerate ? "?regenerate=true" : ""}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setIntelligenceError(data.error ?? "Conversation intelligence is temporarily unavailable.");
+        setIntelligenceStatus("error");
+        return;
+      }
+      setCall((prev) => (prev ? { ...prev, conversationIntelligence: data.intelligence } : prev));
+      setIntelligenceStatus("idle");
+    } catch {
+      setIntelligenceError("Conversation intelligence is temporarily unavailable.");
+      setIntelligenceStatus("error");
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -50,6 +80,15 @@ export function CallResult({ callId }: { callId: string }) {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [callId]);
+
+  useEffect(() => {
+    if (!call) return;
+    if (call.status !== "completed") return;
+    if (call.conversationIntelligence) return;
+    if (intelligenceRequestedRef.current) return;
+    runIntelligenceAnalysis(call.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [call?.id, call?.status, call?.conversationIntelligence]);
 
   if (notFound) {
     return <p className="text-[var(--muted)]">This call could not be found.</p>;
@@ -100,7 +139,7 @@ export function CallResult({ callId }: { callId: string }) {
 
       {isTerminal && (
         <>
-          <div className="mt-10">
+          <div className="mt-10" ref={transcriptRef}>
             <h2 className="text-[13px] font-semibold uppercase tracking-wide text-[var(--muted)]">Transcript</h2>
             <div className="mt-4 rounded-[var(--radius-md)] border border-[var(--border)] bg-[var(--surface)] p-6">
               {call.transcript && call.transcript.length > 0 ? (
@@ -131,12 +170,20 @@ export function CallResult({ callId }: { callId: string }) {
             </div>
           </div>
 
-          <div className="mt-10">
-            <Button variant="secondary" disabled title="Coming in the next phase.">
-              View Lead Intelligence →
-            </Button>
-            <p className="mt-2 text-[12px] text-[var(--muted-2)]">Coming in the next phase.</p>
-          </div>
+          {call.status === "completed" &&
+            (call.conversationIntelligence ? (
+              <ConversationIntelligenceView
+                intelligence={call.conversationIntelligence}
+                onScrollToTranscript={() => transcriptRef.current?.scrollIntoView({ behavior: "smooth" })}
+              />
+            ) : intelligenceStatus === "error" ? (
+              <ConversationIntelligenceError
+                message={intelligenceError ?? "Conversation intelligence is temporarily unavailable."}
+                onRetry={() => runIntelligenceAnalysis(call.id, { regenerate: true })}
+              />
+            ) : (
+              <ConversationIntelligenceLoading />
+            ))}
         </>
       )}
     </div>

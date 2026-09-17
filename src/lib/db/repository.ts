@@ -37,6 +37,7 @@ function callFromRow(row: Record<string, unknown>): CallRecord {
     failureReason: (row.failure_reason as string | null) ?? null,
     startedAt: (row.started_at as string | null) ?? null,
     endedAt: (row.ended_at as string | null) ?? null,
+    conversationIntelligence: (row.conversation_intelligence as CallRecord["conversationIntelligence"]) ?? null,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -59,6 +60,7 @@ function callToRow(call: CallRecord): Record<string, unknown> {
     failure_reason: call.failureReason,
     started_at: call.startedAt,
     ended_at: call.endedAt,
+    conversation_intelligence: call.conversationIntelligence,
     created_at: call.createdAt,
     updated_at: call.updatedAt,
   };
@@ -115,6 +117,7 @@ export async function createCall(input: {
     failureReason: null,
     startedAt: null,
     endedAt: null,
+    conversationIntelligence: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -163,6 +166,7 @@ export async function updateCall(id: string, patch: Partial<CallRecord>): Promis
   if (patch.failureReason !== undefined) row.failure_reason = patch.failureReason;
   if (patch.startedAt !== undefined) row.started_at = patch.startedAt;
   if (patch.endedAt !== undefined) row.ended_at = patch.endedAt;
+  if (patch.conversationIntelligence !== undefined) row.conversation_intelligence = patch.conversationIntelligence;
 
   const { data, error } = await admin.from("call").update(row).eq("id", id).select().maybeSingle();
   if (error) throw new Error(`Failed to update call: ${error.message}`);

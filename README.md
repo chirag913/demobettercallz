@@ -32,6 +32,7 @@ Routes:
 | `/projects/[id]/agent` | AI Sales Agent — enter a number, press CALL ME |
 | `/calls/[id]` | Call result: duration, language, outcome, transcript, recording |
 | `/api/calls`, `/api/calls/[id]` | Create / read a call |
+| `/api/calls/[id]/intelligence` | Analyze a completed call's transcript into Conversation Intelligence |
 | `/api/webhooks/sarvam` | Sarvam Instant Outbound completion webhook |
 
 ## Architecture
@@ -150,6 +151,40 @@ matches the incoming `attempt_id` back to the call we created (falling back to t
 
 The app never pretends a simulated call is real, and never silently falls back to Demo Mode without
 saying so in the UI.
+
+## Conversation Intelligence
+
+Once a call reaches `CALL COMPLETE`, the call result page (`/calls/[id]`) automatically analyzes the
+existing Sarvam/demo transcript — no second recording or transcription pipeline — into a structured
+buyer profile: lead temperature, budget/configuration/location/timeline (with a supporting transcript
+quote per field), buying signals, objections, a Knowledge Guard read of every project-related question
+the lead asked, and a grounded next-best-action recommendation. See `src/lib/intelligence/`.
+
+Two things are deliberately separated:
+
+- **Extraction vs. scoring.** The LLM (`extractConversationIntelligence.ts`) only ever extracts evidence
+  already present in the transcript — it never assigns a score or a HOT/WARM/COLD label. `scoreLead.ts`
+  is a pure, deterministic function that computes both from the extracted evidence, with all weights in
+  one place for easy tuning.
+- **Knowledge Guard reuses, never duplicates**, the existing verified/unverified/restricted taxonomy
+  from `src/lib/knowledge/service.ts` — it classifies each project-related question the lead asked
+  against that same knowledge base rather than maintaining its own copy.
+
+Enable it by setting one more env var (get it from Sarvam's general **Sarvam API** product at
+[indus.sarvam.ai](https://indus.sarvam.ai) → API Keys — a different product/key from `SARVAM_API_KEY`,
+which is for the Voice Agents / Instant Outbound product used to place calls):
+
+```
+SARVAM_CHAT_API_KEY=
+```
+
+Without it, the call result page still works end to end — the Conversation Intelligence section shows
+"Conversation intelligence is temporarily unavailable." with a **Retry Analysis** button instead of
+crashing the page. The same graceful fallback covers an empty transcript, a malformed LLM response, and
+a request timeout (30s). The result is stored on the call record (`call.conversation_intelligence`,
+see `supabase/migrations/0002_conversation_intelligence.sql`) and the analysis is idempotent — refreshing
+the page, or POSTing to `/api/calls/[id]/intelligence` again, returns the stored result instead of
+re-analyzing, unless `?regenerate=true` is passed.
 
 ### How to test Demo Mode
 
