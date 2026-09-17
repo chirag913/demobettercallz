@@ -48,7 +48,12 @@ export async function startCall(input: { projectId: string; phone: string; name?
   if (!projectContext) throw new CallServiceError("Project knowledge is temporarily unavailable.");
 
   try {
-    const result = await provider.createCall({ callId: call.id, phoneNumber: normalizedPhone, projectContext });
+    const result = await provider.createCall({
+      callId: call.id,
+      phoneNumber: normalizedPhone,
+      projectContext,
+      userName: input.name,
+    });
     const updated = await updateCall(call.id, {
       providerCallId: result.providerCallId,
       interactionId: result.interactionId,

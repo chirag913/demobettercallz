@@ -23,7 +23,8 @@ export class SarvamVoiceProvider implements VoiceProvider {
       throw new Error("Sarvam is not configured. Set SARVAM_API_KEY, SARVAM_AGENT_ID, SARVAM_PHONE_NUMBER and related vars.");
     }
 
-    const instructions = buildAgentInstructions(params.projectContext);
+    const userName = params.userName?.trim() || undefined;
+    const instructions = buildAgentInstructions(params.projectContext, userName);
 
     const url = `${SARVAM_BASE_URL}/orgs/${config.orgId}/workspaces/${config.workspaceId}/outbounds`;
     const body = {
@@ -39,6 +40,7 @@ export class SarvamVoiceProvider implements VoiceProvider {
         agent_variables: {
           agent_instructions: instructions,
           project_name: params.projectContext.projectName,
+          ...(userName ? { user_name: userName } : {}),
         },
       },
       user_config: {
@@ -49,6 +51,17 @@ export class SarvamVoiceProvider implements VoiceProvider {
         metadata: { callId: params.callId },
       },
     };
+
+    if (process.env.NODE_ENV !== "production") {
+      // Dev-only visibility into exactly what's sent to Sarvam — no API key or
+      // secret ever appears here, only the project context and instructions.
+      console.log("[sarvam] outbound call agent_variables:", {
+        callId: params.callId,
+        project_name: body.app_config.agent_variables.project_name,
+        user_name: body.app_config.agent_variables.user_name ?? null,
+        agent_instructions: body.app_config.agent_variables.agent_instructions,
+      });
+    }
 
     const response = await fetch(url, {
       method: "POST",

@@ -7,9 +7,12 @@ conversation grounded only in approved project facts, and refuse to answer anyth
 This is a **new, standalone application** — it does not read from, write to, or depend on the existing
 bettercallz.com codebase in any way. It is intended to deploy at `demo.bettercallz.com`.
 
-> All project data (Godrej Arden, its price, RERA number, amenities, etc.) is a **fictional demo
-> dataset** invented for this demonstration — see `src/data/demoProject.ts` and
-> `src/data/demoKnowledge.ts`. None of it describes the real Godrej Arden project.
+> The demo project is **F Premiere** (Home & Soul, Jaypee Greens Sports City, Yamuna Expressway, Greater
+> Noida) — see `src/data/demoProject.ts` and `src/data/demoKnowledge.ts`. Only facts explicitly
+> confirmed against public project sources (location, configurations, RERA numbers) are entered as
+> verified; volatile facts a real buyer would need confirmed live (current pricing, current inventory,
+> possession date, payment plan, discounts) are deliberately left as "on request" / unlisted rather than
+> invented, and the AI agent is instructed to say so rather than guess.
 
 ## Product overview
 
@@ -136,7 +139,7 @@ matches the incoming `attempt_id` back to the call we created (falling back to t
 
 1. Set all `SARVAM_*` env vars and `NEXT_PUBLIC_APP_URL` (use an HTTPS tunnel like `ngrok` for local
    testing, since Sarvam can't reach `localhost`).
-2. Open `/projects/godrej-arden/agent`.
+2. Open `/projects/f-premiere/agent`.
 3. Enter a phone number you have permission to call and press **CALL ME**.
 4. The header will show **Real Mode** and the live panel will say **Real Call**.
 
@@ -188,7 +191,7 @@ re-analyzing, unless `?regenerate=true` is passed.
 
 ### How to test Demo Mode
 
-Leave all `SARVAM_*` vars unset, run `npm run dev`, and walk the flow on `/projects/godrej-arden/agent` —
+Leave all `SARVAM_*` vars unset, run `npm run dev`, and walk the flow on `/projects/f-premiere/agent` —
 the call progresses through `CALLING...` → `CALL IN PROGRESS` → `CALL COMPLETE` in about 30 seconds with
 no external services required.
 
