@@ -100,6 +100,13 @@ Sarvam requires.
 Authentication for Instant Outbound is the Conversations API header `X-API-Key` (this is **not** the
 speech/text `api-subscription-key` header).
 
+`SARVAM_APP_VERSION` is optional and left unset by default, which tells Sarvam to run the agent's latest
+**committed** version on every call — so editing the agent's instructions in the Sarvam dashboard and
+clicking Commit takes effect on the live site immediately, no redeploy needed. Set it to a specific
+number to pin production to that version instead, per Sarvam's own guidance ("bump it deliberately as
+part of your release process") — useful once you've tested a version and don't want further dashboard
+edits to change live behavior until you choose to.
+
 `SARVAM_WEBHOOK_SECRET` is optional — Sarvam does not document a signature/HMAC header for verifying
 webhook authenticity, so this is a shared-secret convention. When it is set, each outbound request
 automatically appends `?secret=<value>` to `webhook_config.url`. You do not need a separate dashboard

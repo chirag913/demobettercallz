@@ -14,7 +14,13 @@ export interface SarvamConfig {
   orgId: string;
   workspaceId: string;
   connectionId: string;
-  appVersion: number;
+  /**
+   * null tracks the agent's latest committed version at call time (Sarvam's
+   * documented behavior for app_version: null). Set SARVAM_APP_VERSION to
+   * pin an explicit version instead once production behavior should only
+   * change on your own schedule.
+   */
+  appVersion: number | null;
   webhookUrl: string;
 }
 
@@ -51,7 +57,7 @@ export function getSarvamConfig(): SarvamConfig | null {
     orgId,
     workspaceId,
     connectionId,
-    appVersion: Number(process.env.SARVAM_APP_VERSION ?? "1") || 1,
+    appVersion: process.env.SARVAM_APP_VERSION ? Number(process.env.SARVAM_APP_VERSION) || null : null,
     webhookUrl: webhookUrl.toString(),
   };
 }
