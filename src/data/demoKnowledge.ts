@@ -102,12 +102,13 @@ export const demoKnowledge: KnowledgeFact[] = [
     category: "pricing",
     field: "startingPrice",
     label: "Starting Price",
-    value: "Price on Request",
-    verificationStatus: "unverified",
-    source: "Not yet confirmed for public disclosure — verify with the sales team (demo dataset)",
+    value: "Starting from ₹1.6 Cr",
+    verificationStatus: "verified",
+    source:
+      "Provided by Investors Clinic (demo dataset) — starting price only; exact current unit-level pricing is not verified and requires sales team confirmation",
     sourceType: "internal_notes",
-    confidence: 50,
-    verifiedAt: null,
+    confidence: 90,
+    verifiedAt: now,
     isDemoValue: true,
   },
 ];

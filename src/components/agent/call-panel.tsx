@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Mic, MicOff, PhoneOff, Loader2 } from "lucide-react";
@@ -96,21 +95,25 @@ export function CallPanel({ projectId, projectName }: { projectId: string; proje
   if (!call) {
     return (
       <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-8">
-        <div className="text-[11px] font-medium uppercase tracking-wide text-[var(--muted-2)]">
-          +91
-        </div>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-          <Input
+        <div className="flex h-[60px] items-center rounded-[var(--radius-sm)] border border-[var(--border-strong)] bg-[var(--surface)] transition-colors focus-within:border-[var(--foreground)]">
+          <span className="pl-4 pr-3 text-[21px] text-[var(--foreground)]">+91</span>
+          <span className="h-6 w-px shrink-0 bg-[var(--border-strong)]" />
+          <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="98765 43210"
             inputMode="tel"
-            className="flex-1"
+            className="h-full min-w-0 flex-1 bg-transparent px-3 text-[21px] text-[var(--foreground)] outline-none placeholder:text-[var(--muted-2)]"
           />
-          <Button onClick={handleCallMe} disabled={submitting || phone.trim().length < 8} size="lg">
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "CALL ME"}
-          </Button>
         </div>
+        <Button
+          onClick={handleCallMe}
+          disabled={submitting || phone.trim().length < 8}
+          size="lg"
+          className="mt-3 h-[60px] w-full"
+        >
+          {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "CALL ME"}
+        </Button>
         {error && <p className="mt-3 text-sm text-[var(--restricted)]">{error}</p>}
         <p className="mt-4 text-[13px] text-[var(--muted-2)]">
           Enter a number you have permission to call for this demonstration.

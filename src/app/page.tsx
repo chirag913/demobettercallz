@@ -33,7 +33,7 @@ const intelligenceChecks = [
 ];
 
 const intelligenceWarnings = [
-  { label: "Current pricing", detail: "Price on Request / verify with sales" },
+  { label: "Current pricing", detail: "Starts from ₹1.6 Cr — exact pricing to verify with sales" },
   { label: "Current inventory", detail: "Not verified" },
 ];
 
@@ -125,7 +125,7 @@ export default function Home() {
                 <div className="text-[11px] uppercase tracking-wide text-[var(--muted-2)]">Configurations</div>
                 <div className="text-base font-semibold">{demoProject.configurations}</div>
               </div>
-              <Badge variant="unverified">Price on Request</Badge>
+              <Badge variant="verified">Starting from ₹1.6 Cr</Badge>
             </div>
             <div className="border-b border-[var(--border)] px-5 py-4">
               <div className="text-[11px] uppercase tracking-wide text-[var(--muted-2)]">RERA</div>
