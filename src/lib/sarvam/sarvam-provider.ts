@@ -30,13 +30,13 @@ export class SarvamVoiceProvider implements VoiceProvider {
       app_config: {
         app_id: config.appId,
         app_version: config.appVersion,
+        app_type: "agent",
         connection_config: {
           connection_id: config.connectionId,
           agent_phone_number: config.agentPhoneNumber,
         },
         agent_variables: {
           agent_instructions: instructions,
-          project_id: params.projectContext.projectId,
           project_name: params.projectContext.projectName,
         },
       },
