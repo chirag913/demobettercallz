@@ -10,21 +10,22 @@ export interface StructuredLLMProvider {
   readonly name: string;
   readonly model: string;
   /**
-   * Sends a system + user prompt and asks for a JSON object matching
-   * jsonSchema. Returns the parsed object as unknown — callers validate
-   * with zod, since "the model returned well-formed but wrong-shaped JSON"
-   * is a real failure mode to handle, not something to trust blindly.
+   * Sends a system + user prompt and asks for a JSON object. Returns the
+   * parsed object as unknown — callers validate with zod, since "the model
+   * returned well-formed but wrong-shaped JSON" is a real failure mode to
+   * handle, not something to trust blindly.
    */
-  extractJson(input: {
-    systemPrompt: string;
-    userPrompt: string;
-    jsonSchema: Record<string, unknown>;
-    schemaName: string;
-  }): Promise<unknown>;
+  extractJson(input: { systemPrompt: string; userPrompt: string }): Promise<unknown>;
 }
 
 const SARVAM_CHAT_URL = "https://api.sarvam.ai/v1/chat/completions";
-const SARVAM_CHAT_MODEL = "sarvam-105b";
+// sarvam-105b is a reasoning model: it can spend its entire token budget on
+// an internal reasoning_content chain-of-thought before ever emitting the
+// final answer, sometimes taking 60-130+ seconds — well past what a Vercel
+// serverless function can wait for. sarvam-105b-conversations returns no
+// reasoning_content and responds in single-digit-to-low-20s seconds in
+// testing, so that's what's used here despite the "-conversations" name.
+const SARVAM_CHAT_MODEL = "sarvam-105b-conversations";
 
 /**
  * Sarvam's general Chat Completions API (https://docs.sarvam.ai/api-reference/chat/chat-completions) —
@@ -32,8 +33,15 @@ const SARVAM_CHAT_MODEL = "sarvam-105b";
  * for placing calls (see lib/sarvam/). Chosen because it's the same vendor
  * the rest of the app already relies on and is tuned for Hindi/Hinglish/
  * English code-mixed conversation, which is exactly what these transcripts
- * are. Uses OpenAI-compatible response_format: json_schema for strict
- * structured output rather than hoping a free-text response parses as JSON.
+ * are.
+ *
+ * Uses response_format: json_object (loose, "just return valid JSON") rather
+ * than the OpenAI-compatible strict json_schema mode — in testing, strict
+ * schema mode on this model gets stuck emitting whitespace padding and never
+ * terminates before the token budget runs out. json_object mode is fast and
+ * reliable; the exact shape is instead spelled out in the prompt (see
+ * prompts.ts) and any minor deviation is normalized before zod validation
+ * in extractConversationIntelligence.ts.
  */
 export class SarvamChatProvider implements StructuredLLMProvider {
   readonly name = "sarvam-chat";
@@ -41,14 +49,9 @@ export class SarvamChatProvider implements StructuredLLMProvider {
 
   constructor(private readonly apiKey: string) {}
 
-  async extractJson(input: {
-    systemPrompt: string;
-    userPrompt: string;
-    jsonSchema: Record<string, unknown>;
-    schemaName: string;
-  }): Promise<unknown> {
+  async extractJson(input: { systemPrompt: string; userPrompt: string }): Promise<unknown> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
+    const timeout = setTimeout(() => controller.abort(), 40_000);
 
     let response: Response;
     try {
@@ -65,14 +68,7 @@ export class SarvamChatProvider implements StructuredLLMProvider {
             { role: "system", content: input.systemPrompt },
             { role: "user", content: input.userPrompt },
           ],
-          response_format: {
-            type: "json_schema",
-            json_schema: {
-              name: input.schemaName,
-              strict: true,
-              schema: input.jsonSchema,
-            },
-          },
+          response_format: { type: "json_object" },
         }),
         signal: controller.signal,
       });

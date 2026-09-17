@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { getStructuredLLMProvider } from "./llm-provider";
-import { EXTRACTION_JSON_SCHEMA, EXTRACTION_SYSTEM_PROMPT, buildExtractionUserPrompt } from "./prompts";
+import { EXTRACTION_SYSTEM_PROMPT, buildExtractionUserPrompt } from "./prompts";
 import { scoreLead } from "./scoreLead";
 import { buildNextBestAction } from "./nextBestAction";
 import type { ConversationIntelligence, KnowledgeGuardResult, QuestionEntry, RawExtraction } from "./types";
@@ -44,6 +44,34 @@ const rawExtractionSchema: z.ZodType<RawExtraction> = z.object({
     requestedCallback: z.boolean(),
   }),
 });
+
+const REQUIREMENT_FIELDS = [
+  "budget",
+  "configuration",
+  "preferredLocation",
+  "purchasePurpose",
+  "purchaseTimeline",
+] as const;
+
+/**
+ * The model is instructed to always return {value, evidence} objects for
+ * every requirement field, but occasionally flattens an unknown one to a
+ * bare null instead — normalize that here rather than rejecting an
+ * otherwise-good extraction over a harmless shape slip.
+ */
+function normalizeRawExtraction(raw: unknown): unknown {
+  if (typeof raw !== "object" || raw === null) return raw;
+  const obj = raw as Record<string, unknown>;
+  const requirements = obj.requirements;
+  if (typeof requirements !== "object" || requirements === null) return raw;
+  const req = requirements as Record<string, unknown>;
+  for (const field of REQUIREMENT_FIELDS) {
+    if (req[field] === null || req[field] === undefined) {
+      req[field] = { value: null, evidence: null };
+    }
+  }
+  return raw;
+}
 
 function formatTranscript(transcript: TranscriptTurn[]): string {
   return transcript
@@ -97,14 +125,12 @@ export async function extractConversationIntelligence(input: {
     raw = await provider.extractJson({
       systemPrompt: EXTRACTION_SYSTEM_PROMPT,
       userPrompt,
-      jsonSchema: EXTRACTION_JSON_SCHEMA,
-      schemaName: "conversation_intelligence_extraction",
     });
   } catch (err) {
     throw new IntelligenceError(err instanceof Error ? err.message : "Conversation analysis failed.");
   }
 
-  const parsed = rawExtractionSchema.safeParse(raw);
+  const parsed = rawExtractionSchema.safeParse(normalizeRawExtraction(raw));
   if (!parsed.success) {
     throw new IntelligenceError("Conversation analysis returned an unexpected format.");
   }

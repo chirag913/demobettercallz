@@ -1,8 +1,14 @@
 /**
- * System prompt + strict JSON schema for Conversation Intelligence
+ * System prompt + JSON shape instructions for Conversation Intelligence
  * extraction. The model is only ever asked to report what is explicitly
  * supported by the transcript — see types.ts RawExtraction for why scoring
  * and temperature are deliberately absent from this schema.
+ *
+ * The exact shape is spelled out here in the prompt rather than enforced via
+ * an OpenAI-style strict json_schema response_format — see llm-provider.ts
+ * for why (strict schema mode on this model gets stuck in a non-terminating
+ * whitespace loop). Minor shape deviations are normalized before zod
+ * validation in extractConversationIntelligence.ts.
  */
 
 export const EXTRACTION_SYSTEM_PROMPT = `You are a sales conversation intelligence engine for a real-estate sales organization.
@@ -31,7 +37,33 @@ Report the following as plain booleans, based only on what was explicitly said �
 - justBrowsingNoTimeline: the prospect said they are just browsing/researching with no purchase timeline
 - requestedCallback: the prospect asked to be called back later
 
-Return strict JSON matching the supplied schema. Do not include any text outside the JSON.`;
+Return ONLY a single JSON object matching the exact shape given in the user message. No markdown, no commentary, no text outside the JSON.`;
+
+const JSON_SHAPE_INSTRUCTIONS = `Return JSON matching EXACTLY this shape (use null for unknown string fields, [] for empty arrays, and keep every key even when its value is null or empty — every "requirements" sub-field must always be an object with "value" and "evidence" keys, never a bare null):
+{
+  "leadName": string | null,
+  "summary": string,
+  "requirements": {
+    "budget": { "value": string | null, "evidence": string | null },
+    "configuration": { "value": string | null, "evidence": string | null },
+    "preferredLocation": { "value": string | null, "evidence": string | null },
+    "purchasePurpose": { "value": string | null, "evidence": string | null },
+    "purchaseTimeline": { "value": string | null, "evidence": string | null },
+    "siteVisitInterest": "interested" | "maybe" | "not_interested" | "unknown"
+  },
+  "buyingSignals": string[],
+  "objections": [{ "text": string, "evidence": string | null }],
+  "questionsAsked": [{ "question": string, "topic": string, "knowledgeStatus": "verified" | "unverified" | "restricted" | "not_covered", "answeredAppropriately": boolean }],
+  "signals": {
+    "strongBuyingIntent": boolean,
+    "pricingQuestionAsked": boolean,
+    "explicitlyNotInterested": boolean,
+    "wrongPerson": boolean,
+    "justBrowsingNoTimeline": boolean,
+    "requestedCallback": boolean
+  }
+}
+Return ONLY this JSON object, no other text.`;
 
 export function buildExtractionUserPrompt(input: {
   projectName: string;
@@ -46,98 +78,7 @@ export function buildExtractionUserPrompt(input: {
     ``,
     `CONVERSATION TRANSCRIPT (AI = property expert, PROSPECT = buyer):`,
     input.transcriptText,
+    ``,
+    JSON_SHAPE_INSTRUCTIONS,
   ].join("\n");
 }
-
-const evidencedValueSchema = {
-  type: "object",
-  properties: {
-    value: { type: ["string", "null"] },
-    evidence: { type: ["string", "null"] },
-  },
-  required: ["value", "evidence"],
-  additionalProperties: false,
-};
-
-export const EXTRACTION_JSON_SCHEMA = {
-  type: "object",
-  properties: {
-    leadName: { type: ["string", "null"] },
-    summary: { type: "string" },
-    requirements: {
-      type: "object",
-      properties: {
-        budget: evidencedValueSchema,
-        configuration: evidencedValueSchema,
-        preferredLocation: evidencedValueSchema,
-        purchasePurpose: evidencedValueSchema,
-        purchaseTimeline: evidencedValueSchema,
-        siteVisitInterest: {
-          type: "string",
-          enum: ["interested", "maybe", "not_interested", "unknown"],
-        },
-      },
-      required: [
-        "budget",
-        "configuration",
-        "preferredLocation",
-        "purchasePurpose",
-        "purchaseTimeline",
-        "siteVisitInterest",
-      ],
-      additionalProperties: false,
-    },
-    buyingSignals: { type: "array", items: { type: "string" } },
-    objections: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          text: { type: "string" },
-          evidence: { type: ["string", "null"] },
-        },
-        required: ["text", "evidence"],
-        additionalProperties: false,
-      },
-    },
-    questionsAsked: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: {
-          question: { type: "string" },
-          topic: { type: "string" },
-          knowledgeStatus: {
-            type: "string",
-            enum: ["verified", "unverified", "restricted", "not_covered"],
-          },
-          answeredAppropriately: { type: "boolean" },
-        },
-        required: ["question", "topic", "knowledgeStatus", "answeredAppropriately"],
-        additionalProperties: false,
-      },
-    },
-    signals: {
-      type: "object",
-      properties: {
-        strongBuyingIntent: { type: "boolean" },
-        pricingQuestionAsked: { type: "boolean" },
-        explicitlyNotInterested: { type: "boolean" },
-        wrongPerson: { type: "boolean" },
-        justBrowsingNoTimeline: { type: "boolean" },
-        requestedCallback: { type: "boolean" },
-      },
-      required: [
-        "strongBuyingIntent",
-        "pricingQuestionAsked",
-        "explicitlyNotInterested",
-        "wrongPerson",
-        "justBrowsingNoTimeline",
-        "requestedCallback",
-      ],
-      additionalProperties: false,
-    },
-  },
-  required: ["leadName", "summary", "requirements", "buyingSignals", "objections", "questionsAsked", "signals"],
-  additionalProperties: false,
-} as const;
