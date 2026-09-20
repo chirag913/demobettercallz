@@ -8,13 +8,13 @@ The home page now starts with “Can you tell if it’s AI?” and an inline pho
 - Keep the existing Supabase, Sarvam Voice, Sarvam Chat, app URL, and webhook-secret variables described in `.env.example`.
 - Set `SARVAM_DEMO_AGENT_ID` to the dedicated demo agent and `SARVAM_DEMO_APP_VERSION` to its committed version. These were added to the existing Vercel Production environment.
 - Set the dedicated agent's stable instructions to `src/lib/sarvam/public-demo-prompt.ts`. Its prompt is installed in Sarvam itself, not rewritten per call. No variables are required by this agent. The property agent's configuration is separate.
-- The currently committed agent version 2 uses Ritu at 1.0x speed. The user's subsequent direction requires restoring the exact male voice from the earlier BetterCallz/property agent, preserving its characteristics. Do not choose a substitute or experiment with female voices. Browser access timed out during this update, so this configuration change has not been applied. Interruption and language switching remain enabled; calls start in Hindi and are capped at three minutes.
+- Committed agent version 3 restores the original Shubh male voice at 1.11x speed and neutral pitch, matching the earlier BetterCallz/property agent. Interruption and language switching remain enabled; calls start in Hindi and are capped at three minutes.
 
-## Revised conversation direction — pending Sarvam publication
+## Revised conversation direction
 
 The repository prompt now prioritizes discovery, contextual follow-ups, current-versus-future business memory, topic changes, short responses and a natural ending. It removes the proactive AI opening, unsolicited test invitation, recurring pitches and stock acknowledgements. Direct identity questions still receive an honest AI disclosure; the website remains explicitly labeled as an AI demo.
 
-To activate this revision, inspect the earlier BetterCallz agent's male voice and copy its exact voice settings to the dedicated public agent. Replace Instructions with `PUBLIC_DEMO_PROMPT` and Greeting with `PUBLIC_DEMO_GREETING` from `src/lib/sarvam/public-demo-prompt.ts`. Regenerate all greeting translations, verify the Hindi male opening, commit a new version and update Production `SARVAM_DEMO_APP_VERSION` before redeploying. The provider sends no runtime prompt override, so editing the repository alone does not change the live voice conversation. Verify an answered call before claiming the revised conversation is live.
+Published the repository prompt and greeting to dedicated Sarvam agent version 3 on 2026-09-20. All greeting translations were regenerated and the Hindi male opening verified. Production SARVAM_DEMO_APP_VERSION is pinned to 3. The provider sends no runtime prompt override, so future prompt edits must also be committed in Sarvam. An answered call is still needed to evaluate the revised conversation quality.
 
 No public demo is simulated: without its dedicated agent configuration and durable storage, calling is unavailable. The existing project demo still supports its explicitly labeled simulation mode. Provider status is asynchronous; the website does not pretend to detect live speech, context updates, or connection events the provider has not reported.
 
