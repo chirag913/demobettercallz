@@ -11,7 +11,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             bettercallz<span className="text-[var(--muted)]">.</span>
           </Link>
           <nav className="hidden items-center gap-8 text-sm text-[var(--muted)] md:flex">
-            <Link href="/" className="hover:text-[var(--foreground)]">Overview</Link>
             <Link href="/projects" className="hover:text-[var(--foreground)]">Projects</Link>
             <Link href="/#demo" className="hover:text-[var(--foreground)]">Live demo</Link>
           </nav>
