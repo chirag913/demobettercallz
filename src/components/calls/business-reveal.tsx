@@ -5,7 +5,7 @@ export function BusinessReveal({ call, error, onRetry, onTryAgain }: { call: Cal
   const intelligence = call.conversationIntelligence;
   const business = intelligence?.business;
   return <section className="mx-auto max-w-4xl py-8">
-    <h2 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight md:text-5xl">Okay. Here’s what we understood.</h2>
+    <h2 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight md:text-5xl">Okay. Let’s see what it picked up.</h2>
     <p className="mt-4 text-[var(--muted)]">From your conversation. Anything you didn’t tell us stays unknown.</p>
     {business ? <>
       <dl className="mt-10 grid gap-x-10 sm:grid-cols-2">
