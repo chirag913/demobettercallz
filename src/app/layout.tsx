@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Sales Intelligence for Investors Clinic — Powered by BetterCallz",
+  title: "BetterCallz — AI Sales Intelligence",
   description: "Turn every lead conversation into sales intelligence.",
 };
 

@@ -2,7 +2,7 @@ import { DEMO_PROJECT_ID } from "./demoProject";
 import type { KnowledgeFact } from "@/lib/types";
 
 const PROVIDED_SOURCE = "Provided project material (demo dataset)";
-const INVESTORS_CLINIC_SOURCE = "Provided by Investors Clinic (demo dataset)";
+const TEAM_PROVIDED_SOURCE = "Provided by the project team (demo dataset)";
 const now = new Date().toISOString();
 
 /**
@@ -74,7 +74,7 @@ export const demoKnowledge: KnowledgeFact[] = [
     label: "Available Configurations & Sizes",
     value: "2 BHK: 1256 / 1435 / 1656 / 1685 sq ft — 3 BHK: 2219 / 2604 sq ft",
     verificationStatus: "verified",
-    source: INVESTORS_CLINIC_SOURCE,
+    source: TEAM_PROVIDED_SOURCE,
     sourceType: "project_brochure",
     confidence: 90,
     verifiedAt: now,
@@ -105,7 +105,7 @@ export const demoKnowledge: KnowledgeFact[] = [
     value: "Starting from ₹1.6 Cr",
     verificationStatus: "verified",
     source:
-      "Provided by Investors Clinic (demo dataset) — starting price only; exact current unit-level pricing is not verified and requires sales team confirmation",
+      "Provided by the project team (demo dataset) — starting price only; exact current unit-level pricing is not verified and requires sales team confirmation",
     sourceType: "internal_notes",
     confidence: 90,
     verifiedAt: now,

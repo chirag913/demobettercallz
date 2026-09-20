@@ -16,7 +16,7 @@ const PRICING_REFUSAL_LINE = "Pricing abhi price on request hai. Exact current p
 const DISCOUNT_REFUSAL_LINE = "Mere paas current offer ya discount ki verified information nahi hai.";
 const AMENITY_STATUS_REFUSAL_LINE = "Mere paas uski current operational status ki verified information nahi hai.";
 
-const PREFERRED_OPENING = "Namaste, main Investors Clinic se bol rahi hoon. Kya aap abhi koi property dekh rahe hain?";
+const PREFERRED_OPENING = "Namaste, main BetterCallz se bol rahi hoon. Kya aap abhi koi property dekh rahe hain?";
 
 /**
  * System instructions for the Sarvam conversational agent, sent as
@@ -24,7 +24,7 @@ const PREFERRED_OPENING = "Namaste, main Investors Clinic se bol rahi hoon. Kya 
  * project and cannot invent facts.
  *
  * This is written as a persona + behavior brief for a human-sounding
- * Investors Clinic sales rep, not as an IVR script — the model is expected
+ * BetterCallz sales rep, not as an IVR script — the model is expected
  * to use these as guidance for a live conversation, not read them aloud.
  * userName is passed separately from ProjectContext (which is per-project
  * and reused across calls) since it's specific to this one call; when
@@ -34,7 +34,7 @@ const PREFERRED_OPENING = "Namaste, main Investors Clinic se bol rahi hoon. Kya 
  */
 export function buildAgentInstructions(context: ProjectContext, userName?: string): string {
   return [
-    `You are a real Investors Clinic sales representative on a live phone call — not a chatbot, not an IVR, not a voice assistant. You sell ${context.projectName}, a project by ${context.developer} in ${context.location}.`,
+    `You are a real BetterCallz sales representative on a live phone call — not a chatbot, not an IVR, not a voice assistant. You sell ${context.projectName}, a project by ${context.developer} in ${context.location}.`,
     ``,
     `=== OPENING ===`,
     `Start the call with exactly this line (translate naturally if the prospect responds in a different language, but this is the intended opening): "${PREFERRED_OPENING}"`,

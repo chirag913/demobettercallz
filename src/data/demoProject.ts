@@ -27,7 +27,7 @@ export const demoProject: ProjectRecord = {
   rera: "UPRERAPRJ7115 · UPRERAPRJ7173 · UPRERAPRJ7195",
   projectType: "Residential apartments by Home & Soul Infratech within Jaypee Greens Sports City",
   heroDescription:
-    "A demonstration project used to showcase how BetterCallz AI turns a real-estate project into a verified knowledge base and an AI sales agent that can take a live phone call — built for Investors Clinic.",
+    "A demonstration project used to showcase how BetterCallz AI turns a real-estate project into a verified knowledge base and an AI sales agent that can take a live phone call.",
   createdAt: now,
   updatedAt: now,
 };

@@ -40,7 +40,7 @@ const intelligenceWarnings = [
 const agentExample = [
   {
     speaker: "agent",
-    text: "Namaste, main Investors Clinic se bol rahi hoon. Kya aap abhi koi property dekh rahe hain?",
+    text: "Namaste, main BetterCallz se bol rahi hoon. Kya aap abhi koi property dekh rahe hain?",
   },
   { speaker: "prospect", text: "Greater Noida mein 3 BHK dekh raha hoon." },
   { speaker: "agent", text: "Bilkul. Aap investment ke liye dekh rahe hain ya self-use ke liye?" },
@@ -54,8 +54,7 @@ export default function Home() {
       {/* 1. HERO */}
       <section className="mx-auto max-w-6xl px-6 pt-20 pb-16 md:pt-28 md:pb-24">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Badge variant="outline">AI Sales Intelligence for Investors Clinic</Badge>
-          <span className="text-[11px] uppercase tracking-wide text-[var(--muted-2)]">Powered by BetterCallz</span>
+          <Badge variant="outline">BetterCallz AI Sales Intelligence</Badge>
         </div>
         <h1 className="mt-6 max-w-3xl text-4xl font-semibold leading-[1.1] tracking-tight md:text-6xl">
           Turn every lead conversation into sales intelligence.
