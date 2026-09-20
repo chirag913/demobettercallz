@@ -14,6 +14,7 @@ export function ContactForm() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [notificationIssue, setNotificationIssue] = useState(false);
   const lock = useRef(false);
   const successRef = useRef<HTMLDivElement>(null);
   useEffect(() => { if (submitted) successRef.current?.focus(); }, [submitted]);
@@ -41,6 +42,7 @@ export function ContactForm() {
         setError(result.error ?? "We couldn’t confirm your inquiry. Please try again.");
         return;
       }
+      setNotificationIssue(result.emailAccepted === false);
       setSubmitted(true);
     } catch {
       setError("We couldn’t confirm your inquiry. Check your connection and try again.");
@@ -55,6 +57,7 @@ export function ContactForm() {
       <Check aria-hidden="true" className="mb-6 h-9 w-9 text-[var(--verified)]" strokeWidth={1.5} />
       <h2 className="text-4xl font-semibold tracking-tight">Got it. We’ll be in touch.</h2>
       <p className="mt-4 max-w-sm leading-relaxed text-[var(--muted)]">Your inquiry is with BetterCallz. We’ll follow up using the details you shared.</p>
+      {notificationIssue && <p className="mt-3 max-w-sm text-sm leading-relaxed text-[var(--muted)]">Your inquiry was saved, but we couldn’t confirm the team’s email notification. You don’t need to submit it again.</p>}
       <Button href="/" variant="link" className="mt-8 self-start">Back to BetterCallz <ArrowRight aria-hidden="true" className="h-4 w-4" /></Button>
     </div>
   );

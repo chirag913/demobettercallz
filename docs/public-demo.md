@@ -22,7 +22,7 @@ No public demo is simulated: without its dedicated agent configuration and durab
 
 The actual completed-call transcript is sent through the existing Sarvam Chat provider. A dedicated extraction returns business, lead source, sales process, pain, qualification, explicit intent, and context. Every extracted business fact must carry a verbatim quote found in a prospect turn; facts with unmatched quotes are discarded. A quote match is a grounding check, not a guarantee of semantic correctness, so the result remains a sales aid for human review. Unknown values remain unknown. No artificial score is displayed.
 
-The sales summary appears before the expandable transcript. Suggested next steps do not claim any notification, booking, message, or callback occurred. The contact form persists inquiries but sends no email because this repository has no Resend integration.
+The sales summary appears before the expandable transcript. Suggested next steps do not claim any notification, booking, message, or callback occurred. The separate contact form persists inquiries and attempts a Resend team notification when configured; see `contact.md` for configuration and failure behavior.
 
 ## Verification
 

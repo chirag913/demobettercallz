@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { contactSchema } from "@/lib/contact/schema";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { randomUUID } from "node:crypto";
+import { notifyContactTeam } from "@/lib/contact/notify";
 
 export async function POST(request: Request) {
   const origin = request.headers.get("origin");
@@ -23,14 +25,18 @@ export async function POST(request: Request) {
     const admin = getSupabaseAdmin();
     if (!admin) return NextResponse.json({ error: "We can’t receive inquiries right now. Please try again later." }, { status: 503 });
     const inquiry = parsed.data;
+    const inquiryId = randomUUID();
     const { error } = await admin.from("contact_inquiry").insert({
+      id: inquiryId,
       name: inquiry.name, email: inquiry.email, phone: inquiry.phone,
       company: inquiry.company, website: inquiry.website || null,
       lead_volume: inquiry.leadVolume, interest: inquiry.interest,
       message: inquiry.message, source: "/contact",
     });
     if (error) throw new Error("Contact persistence failed");
-    return NextResponse.json({ submitted: true }, { status: 201 });
+    const emailAccepted = await notifyContactTeam(inquiry, inquiryId);
+    if (!emailAccepted) console.error("Contact inquiry saved; team email notification was not confirmed.");
+    return NextResponse.json({ submitted: true, emailAccepted }, { status: 201 });
   } catch {
     // Never log submitted personal data or claim receipt after a storage failure.
     console.error("Contact inquiry could not be saved.");

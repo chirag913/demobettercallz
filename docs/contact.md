@@ -10,7 +10,9 @@ The `/contact` page extends the existing cream/black, Geist-based landing-page d
 
 Inquiries are stored in `public.contact_inquiry`, with a server-generated timestamp and `/contact` source. RLS denies public access; the service-role client inserts records. There is intentionally no in-memory success fallback. Without Supabase or the migration, submission returns 503 and retains the form details.
 
-No Resend integration exists in this repository. Email notifications and visitor confirmations are therefore not implemented, and the UI makes no email-delivery claim. The team must review the inquiry table until an email integration is configured.
+After confirmed persistence, the route sends a plain-text team notification through Resend, with all form fields and the visitor's address as Reply-To. Configure server-only `RESEND_API_KEY`, `CONTACT_EMAIL_FROM` (a verified sender), and `CONTACT_EMAIL_TO` (the team's destination) in Vercel Production, then redeploy. No visitor confirmation email is sent. Resend API acceptance is not an inbox-delivery guarantee.
+
+Resend configuration and live delivery verification are pending account access and the user's destination address. If notification fails or configuration is missing, the inquiry remains saved, the API reports `emailAccepted: false`, and the success page explicitly says the notification could not be confirmed. The team can recover inquiries from `contact_inquiry`. There is no background retry worker; failures are logged without personal data. A failed database insert never sends email.
 
 ## Verification
 
