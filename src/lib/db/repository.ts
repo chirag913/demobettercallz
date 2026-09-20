@@ -151,9 +151,13 @@ export async function getCallByProviderCallId(providerCallId: string): Promise<C
   return data ? callFromRow(data) : null;
 }
 
-export async function updateCall(id: string, patch: Partial<CallRecord>): Promise<CallRecord | null> {
+export async function updateCall(id: string, patch: Partial<CallRecord>, onlyIfActive = false): Promise<CallRecord | null> {
   const admin = getSupabaseAdmin();
-  if (!admin) return memoryStore.updateCall(id, patch);
+  if (!admin) {
+    const current = memoryStore.getCall(id);
+    if (onlyIfActive && current && ["completed", "failed"].includes(current.status)) return current;
+    return memoryStore.updateCall(id, patch);
+  }
 
   const row: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (patch.providerCallId !== undefined) row.provider_call_id = patch.providerCallId;
@@ -168,7 +172,10 @@ export async function updateCall(id: string, patch: Partial<CallRecord>): Promis
   if (patch.endedAt !== undefined) row.ended_at = patch.endedAt;
   if (patch.conversationIntelligence !== undefined) row.conversation_intelligence = patch.conversationIntelligence;
 
-  const { data, error } = await admin.from("call").update(row).eq("id", id).select().maybeSingle();
+  let query = admin.from("call").update(row).eq("id", id);
+  if (onlyIfActive) query = query.not("status", "in", "(completed,failed)");
+  const { data, error } = await query.select().maybeSingle();
   if (error) throw new Error(`Failed to update call: ${error.message}`);
+  if (!data && onlyIfActive) return getCall(id);
   return data ? callFromRow(data) : null;
 }

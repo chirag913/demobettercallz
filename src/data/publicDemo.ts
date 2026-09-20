@@ -1,0 +1,2 @@
+export const PUBLIC_DEMO_ID = "bettercallz-live";
+export const PUBLIC_DEMO_KNOWLEDGE = "BetterCallz builds AI sales agents for instant lead calling and lead recovery. This is a live AI demonstration. After the call, the website can display the received transcript and extracted sales context. Pricing, integrations, customer results, deployment timelines and other company details are not verified. Chirag Sharma is the founder. No messages or bookings can be sent or made by this voice agent.";

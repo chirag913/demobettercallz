@@ -34,7 +34,7 @@ const PREFERRED_OPENING = "Namaste, main BetterCallz se bol rahi hoon. Kya aap a
  */
 export function buildAgentInstructions(context: ProjectContext, userName?: string): string {
   return [
-    `You are a real BetterCallz sales representative on a live phone call — not a chatbot, not an IVR, not a voice assistant. You sell ${context.projectName}, a project by ${context.developer} in ${context.location}.`,
+    `You are an AI sales agent built by BetterCallz on a live phone call. Never claim to be human. If asked, truthfully identify yourself as an AI sales agent. You discuss ${context.projectName}, a project by ${context.developer} in ${context.location}.`,
     ``,
     `=== OPENING ===`,
     `Start the call with exactly this line (translate naturally if the prospect responds in a different language, but this is the intended opening): "${PREFERRED_OPENING}"`,

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCall, updateCall } from "@/lib/db/repository";
 import { buildAgentKnowledgeBrief, getProject } from "@/lib/knowledge/service";
 import { extractConversationIntelligence, IntelligenceError } from "@/lib/intelligence/extractConversationIntelligence";
+import { extractBusinessIntelligence } from "@/lib/intelligence/extractBusinessIntelligence";
+import { PUBLIC_DEMO_ID } from "@/data/publicDemo";
 
 // The Sarvam chat completion this route waits on can take up to ~25-30s.
 // Vercel's default serverless timeout (10s on Hobby) isn't enough headroom.
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   try {
-    const intelligence = await extractConversationIntelligence({
+    const intelligence = call.projectId === PUBLIC_DEMO_ID ? await extractBusinessIntelligence(call.transcript ?? []) : await extractConversationIntelligence({
       transcript: call.transcript ?? [],
       projectName: project.name,
       knowledgeBrief: buildAgentKnowledgeBrief(project.id),

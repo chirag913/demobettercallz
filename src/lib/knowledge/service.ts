@@ -1,6 +1,7 @@
 import { demoProject, DEMO_PROJECT_ID } from "@/data/demoProject";
 import { demoKnowledge } from "@/data/demoKnowledge";
 import { demoInventory } from "@/data/demoInventory";
+import { PUBLIC_DEMO_ID, PUBLIC_DEMO_KNOWLEDGE } from "@/data/publicDemo";
 import type {
   InventoryUnit,
   KnowledgeCategory,
@@ -41,6 +42,11 @@ function inventoryToFacts(units: InventoryUnit[]): KnowledgeFact[] {
 }
 
 export function getProject(projectId: string): ProjectRecord | null {
+  if (projectId === PUBLIC_DEMO_ID) return {
+    ...demoProject, id: PUBLIC_DEMO_ID, name: "BetterCallz live demo", developer: "BetterCallz",
+    location: "", tagline: "A conversation about your leads", configurations: "", possession: "", rera: "",
+    projectType: "AI sales demonstration", heroDescription: PUBLIC_DEMO_KNOWLEDGE,
+  };
   if (projectId !== DEMO_PROJECT_ID) return null;
   return demoProject;
 }

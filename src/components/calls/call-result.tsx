@@ -9,6 +9,9 @@ import {
   ConversationIntelligenceView,
 } from "@/components/calls/conversation-intelligence";
 import type { CallRecord, CallState } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { BusinessReveal } from "@/components/calls/business-reveal";
+import { PUBLIC_DEMO_ID } from "@/data/publicDemo";
 
 const STATE_MESSAGE: Record<CallState, string> = {
   created: "CONNECTING TO AI SALES AGENT...",
@@ -27,14 +30,14 @@ function formatDuration(seconds: number | null) {
   return `${m}m ${s}s`;
 }
 
-export function CallResult({ callId }: { callId: string }) {
+export function CallResult({ callId, onTryAgain }: { callId: string; onTryAgain?: () => void }) {
   const [call, setCall] = useState<CallRecord | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [pollError, setPollError] = useState(false);
   const [intelligenceStatus, setIntelligenceStatus] = useState<"idle" | "loading" | "error">("idle");
   const [intelligenceError, setIntelligenceError] = useState<string | null>(null);
   const intelligenceRequestedRef = useRef(false);
   const transcriptRef = useRef<HTMLDivElement | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   async function runIntelligenceAnalysis(id: string, options?: { regenerate?: boolean }) {
     intelligenceRequestedRef.current = true;
@@ -60,24 +63,33 @@ export function CallResult({ callId }: { callId: string }) {
 
   useEffect(() => {
     let active = true;
+    let timeout: ReturnType<typeof setTimeout>;
     async function poll() {
-      const res = await fetch(`/api/calls/${callId}`);
-      if (!active) return;
-      if (!res.ok) {
-        setNotFound(true);
-        return;
+      try {
+        const res = await fetch(`/api/calls/${callId}`, { signal: AbortSignal.timeout(12000) });
+        if (!active) return;
+        if (res.status === 404) {
+          setNotFound(true);
+        } else if (!res.ok) {
+          setPollError(true);
+        } else {
+          const data = await res.json();
+          if (!active) return;
+          setNotFound(false);
+          setPollError(false);
+          setCall((previous) => ({ ...data.call, conversationIntelligence: data.call.conversationIntelligence ?? (previous?.id === data.call.id ? previous?.conversationIntelligence : null) }));
+          if (data.call.status === "completed" || data.call.status === "failed") return;
+        }
+      } catch {
+        if (!active) return;
+        setPollError(true);
       }
-      const data = await res.json();
-      setCall(data.call);
-      if (data.call.status === "completed" || data.call.status === "failed") {
-        if (pollRef.current) clearInterval(pollRef.current);
-      }
+      if (active) timeout = setTimeout(poll, 2000);
     }
-    poll();
-    pollRef.current = setInterval(poll, 1500);
+    void poll();
     return () => {
       active = false;
-      if (pollRef.current) clearInterval(pollRef.current);
+      clearTimeout(timeout);
     };
   }, [callId]);
 
@@ -97,12 +109,16 @@ export function CallResult({ callId }: { callId: string }) {
   if (!call) {
     return (
       <div className="flex items-center gap-2 text-[var(--muted)]">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading call…
+        <Loader2 className="h-4 w-4 animate-spin" /> {pollError ? "Connection interrupted. Retrying…" : "Loading call…"}
       </div>
     );
   }
 
   const isTerminal = call.status === "completed" || call.status === "failed";
+
+  if (call.projectId === PUBLIC_DEMO_ID && call.status === "completed") {
+    return <BusinessReveal call={call} error={intelligenceError} onRetry={() => runIntelligenceAnalysis(call.id, { regenerate: true })} onTryAgain={onTryAgain} />;
+  }
 
   return (
     <div>
@@ -184,6 +200,16 @@ export function CallResult({ callId }: { callId: string }) {
             ) : (
               <ConversationIntelligenceLoading />
             ))}
+          {call.status === "completed" && (
+            <section className="mt-12 border-t border-[var(--border)] pt-10">
+              <h2 className="text-3xl font-semibold tracking-tight">Imagine this happening to every lead.</h2>
+              <p className="mt-3 text-[var(--muted)]">Every Meta lead. Every missed call. Every old lead sitting in your CRM.</p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button href={`/projects/${call.projectId}/agent`}>Try another call</Button>
+                <Button href="/contact" variant="secondary">Build this for my business</Button>
+              </div>
+            </section>
+          )}
         </>
       )}
     </div>

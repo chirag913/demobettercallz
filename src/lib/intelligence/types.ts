@@ -82,6 +82,7 @@ export interface LeadScoreResult {
 }
 
 export interface ConversationIntelligence {
+  business?: BusinessIntelligence;
   leadName: string | null;
   leadTemperature: LeadTemperature;
   leadScore: number;
@@ -109,4 +110,14 @@ export interface ConversationIntelligence {
   analyzedAt: string;
   model: string;
   provider: string;
+}
+
+export interface BusinessIntelligence {
+  industry: EvidencedValue;
+  leadSource: EvidencedValue;
+  salesProcess: EvidencedValue;
+  mainProblem: EvidencedValue;
+  qualification: EvidencedValue;
+  intent: EvidencedValue;
+  context: EvidencedValue;
 }

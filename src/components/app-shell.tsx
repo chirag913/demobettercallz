@@ -1,17 +1,6 @@
 import Link from "next/link";
-import { isRealMode } from "@/lib/sarvam";
-import { cn } from "@/lib/utils";
 import { DEMO_PROJECT_ID } from "@/data/demoProject";
-
-function ModeIndicator() {
-  const real = isRealMode();
-  return (
-    <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wide">
-      <span className={cn("h-1.5 w-1.5 rounded-full", real ? "bg-emerald-600" : "bg-black/40")} />
-      <span className="text-[var(--muted)]">{real ? "Real Mode" : "Demo Mode"}</span>
-    </div>
-  );
-}
+import { Button } from "@/components/ui/button";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -24,15 +13,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <nav className="hidden items-center gap-8 text-sm text-[var(--muted)] md:flex">
             <Link href="/" className="hover:text-[var(--foreground)]">Overview</Link>
             <Link href="/projects" className="hover:text-[var(--foreground)]">Projects</Link>
-            <Link href={`/projects/${DEMO_PROJECT_ID}`} className="hover:text-[var(--foreground)]">Demo</Link>
+            <Link href="/#demo" className="hover:text-[var(--foreground)]">Live demo</Link>
           </nav>
-          <ModeIndicator />
+          <div className="flex items-center gap-3 sm:gap-5">
+            <Link href="/contact" className="py-3 text-sm text-[var(--muted)] hover:text-[var(--foreground)]">Contact</Link>
+            <Button href="/#demo" size="sm">Try the AI</Button>
+          </div>
         </div>
       </header>
       <main className="flex-1">{children}</main>
       <footer className="border-t border-[var(--border)] py-8">
-        <div className="mx-auto max-w-6xl px-6 text-[13px] text-[var(--muted-2)]">
-          BetterCallz AI — Phase 1 MVP. Demo dataset, not real project data.
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-5 px-6 text-[13px] text-[var(--muted)]">
+          <div>
+            <p>BetterCallz. Better conversations. Clearer next steps.</p>
+            <Link href={`/projects/${DEMO_PROJECT_ID}/agent`} className="mt-3 inline-block underline underline-offset-4">Explore the property demo</Link>
+          </div>
+          <Link href="/contact" className="py-3 underline underline-offset-4 hover:text-[var(--foreground)]">Contact BetterCallz</Link>
         </div>
       </footer>
     </div>

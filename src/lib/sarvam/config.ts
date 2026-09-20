@@ -27,9 +27,9 @@ export interface SarvamConfig {
   webhookUrl: string;
 }
 
-export function getSarvamConfig(): SarvamConfig | null {
+export function getSarvamConfig(publicDemo = false): SarvamConfig | null {
   const apiKey = process.env.SARVAM_API_KEY;
-  const appId = process.env.SARVAM_AGENT_ID;
+  const appId = publicDemo ? process.env.SARVAM_DEMO_AGENT_ID : process.env.SARVAM_AGENT_ID;
   const agentPhoneNumber = process.env.SARVAM_PHONE_NUMBER;
   const orgId = process.env.SARVAM_ORG_ID;
   const workspaceId = process.env.SARVAM_WORKSPACE_ID;
@@ -46,7 +46,8 @@ export function getSarvamConfig(): SarvamConfig | null {
   } catch {
     return null;
   }
-  const pinnedVersion = process.env.SARVAM_APP_VERSION ? Number(process.env.SARVAM_APP_VERSION) || null : null;
+  const version = publicDemo ? process.env.SARVAM_DEMO_APP_VERSION : process.env.SARVAM_APP_VERSION;
+  const pinnedVersion = version ? Number(version) || null : null;
 
   const webhookSecret = process.env.SARVAM_WEBHOOK_SECRET;
   // Sarvam does not document HMAC signing. If we set a shared secret, attach it

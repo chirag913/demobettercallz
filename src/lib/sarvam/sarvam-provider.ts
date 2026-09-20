@@ -1,6 +1,8 @@
 import "server-only";
 import { getSarvamConfig } from "./config";
 import { buildAgentInstructions } from "./agent-prompt";
+import { PUBLIC_DEMO_ID } from "@/data/publicDemo";
+import { PUBLIC_DEMO_PROMPT } from "./public-demo-prompt";
 import type { CallStatusResult, CreateCallParams, CreateCallResult, TranscriptResult, VoiceProvider } from "./types";
 
 const SARVAM_BASE_URL = "https://apps.sarvam.ai/api/outbounds/v1";
@@ -18,13 +20,14 @@ export class SarvamVoiceProvider implements VoiceProvider {
   readonly name = "sarvam" as const;
 
   async createCall(params: CreateCallParams): Promise<CreateCallResult> {
-    const config = getSarvamConfig();
+    const publicDemo = params.projectContext.projectId === PUBLIC_DEMO_ID;
+    const config = getSarvamConfig(publicDemo);
     if (!config) {
       throw new Error("Sarvam is not configured. Set SARVAM_API_KEY, SARVAM_AGENT_ID, SARVAM_PHONE_NUMBER and related vars.");
     }
 
     const userName = params.userName?.trim() || undefined;
-    const instructions = buildAgentInstructions(params.projectContext, userName);
+    const instructions = publicDemo ? PUBLIC_DEMO_PROMPT : buildAgentInstructions(params.projectContext, userName);
 
     const url = `${SARVAM_BASE_URL}/orgs/${config.orgId}/workspaces/${config.workspaceId}/outbounds`;
     const body = {
@@ -37,7 +40,7 @@ export class SarvamVoiceProvider implements VoiceProvider {
           connection_id: config.connectionId,
           agent_phone_number: config.agentPhoneNumber,
         },
-        agent_variables: {
+        agent_variables: publicDemo ? {} : {
           agent_instructions: instructions,
           project_name: params.projectContext.projectName,
           ...(userName ? { user_name: userName } : {}),
@@ -57,9 +60,8 @@ export class SarvamVoiceProvider implements VoiceProvider {
       // secret ever appears here, only the project context and instructions.
       console.log("[sarvam] outbound call agent_variables:", {
         callId: params.callId,
-        project_name: body.app_config.agent_variables.project_name,
-        user_name: body.app_config.agent_variables.user_name ?? null,
-        agent_instructions: body.app_config.agent_variables.agent_instructions,
+        project_name: params.projectContext.projectName,
+        public_demo: publicDemo,
       });
     }
 

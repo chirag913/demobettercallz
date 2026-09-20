@@ -5,6 +5,10 @@ import { buildAgentKnowledgeBrief, getProject, getRestrictedTopics } from "@/lib
 import { normalizeIndianPhone } from "@/lib/phone";
 import { buildDemoTranscript, simulateDemoCallState, DEMO_CALL_LANGUAGE } from "@/lib/sarvam/demo-provider";
 import type { CallRecord } from "@/lib/types";
+import { PUBLIC_DEMO_ID, PUBLIC_DEMO_KNOWLEDGE } from "@/data/publicDemo";
+import { getSarvamConfig } from "@/lib/sarvam/config";
+import { SarvamVoiceProvider } from "@/lib/sarvam/sarvam-provider";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export class CallServiceError extends Error {}
 
@@ -17,7 +21,7 @@ function projectContextFor(projectId: string): ProjectContext | null {
     developer: project.developer,
     location: project.location,
     configurations: project.configurations,
-    knowledgeBrief: buildAgentKnowledgeBrief(project.id),
+    knowledgeBrief: projectId === PUBLIC_DEMO_ID ? PUBLIC_DEMO_KNOWLEDGE : buildAgentKnowledgeBrief(project.id),
     restrictedTopics: getRestrictedTopics(project.id),
   };
 }
@@ -26,14 +30,18 @@ function projectContextFor(projectId: string): ProjectContext | null {
 export async function startCall(input: { projectId: string; phone: string; name?: string }): Promise<CallRecord> {
   const project = getProject(input.projectId);
   if (!project) throw new CallServiceError("Project not found");
+  const publicDemo = input.projectId === PUBLIC_DEMO_ID;
+  if (publicDemo && (!getSarvamConfig(true) || !isSupabaseConfigured())) {
+    throw new CallServiceError("The live demo is temporarily unavailable. Please contact BetterCallz to arrange a demo.");
+  }
 
   const normalizedPhone = normalizeIndianPhone(input.phone);
   if (!normalizedPhone) throw new CallServiceError("Enter a valid Indian phone number, for example 98765 43210.");
 
   const lead = await createLead({ projectId: input.projectId, phone: normalizedPhone, name: input.name });
 
-  const provider = getVoiceProvider();
-  const mode: CallRecord["mode"] = isRealMode() ? "real" : "demo";
+  const provider = publicDemo ? new SarvamVoiceProvider() : getVoiceProvider();
+  const mode: CallRecord["mode"] = publicDemo || isRealMode() ? "real" : "demo";
 
   let call = await createCall({
     leadId: lead.id,
@@ -59,14 +67,14 @@ export async function startCall(input: { projectId: string; phone: string; name?
       interactionId: result.interactionId,
       status: result.status,
       startedAt: new Date().toISOString(),
-    });
+    }, true);
     if (!updated) throw new CallServiceError("Call could not be started.");
     call = updated;
   } catch (err) {
     await updateCall(call.id, {
       status: "failed",
       failureReason: err instanceof Error ? err.message : "Unknown error",
-    });
+    }, true);
     throw new CallServiceError("We couldn't connect the call. Please try again.");
   }
 
