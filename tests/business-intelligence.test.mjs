@@ -26,3 +26,10 @@ test("missing provider, missing transcript and malformed analysis fail honestly"
   await assert.rejects(extractor(null)([]));
   await assert.rejects(extractor({ extractJson: async () => ({ industry: "fabricated" }) })(transcript));
 });
+
+test("bare null facts remain unknown for calls without business context", async () => {
+  const extract = extractor({ name: "test", model: "test", extractJson: async () => ({ industry: null, leadSource: null, salesProcess: null, mainProblem: null, qualification: null, intent: null, context: null }) });
+  const result = await extract([{ speaker: "prospect", text: "Please record your message." }]);
+  assert.ok(Object.values(result.business).every((fact) => fact.value === null && fact.evidence === null));
+  assert.equal(result.summary, "Not enough business context was shared in this call.");
+});

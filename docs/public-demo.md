@@ -14,7 +14,7 @@ No public demo is simulated: without its dedicated agent configuration and durab
 
 ## Reveal
 
-The actual completed-call transcript is sent through the existing Sarvam Chat provider. A dedicated extraction returns business, lead source, sales process, pain, qualification, explicit intent, and context. Every displayed value must carry a verbatim quote found in a prospect turn; unmatched quotes are discarded. A quote match is a grounding check, not a guarantee of semantic correctness, so the result remains a sales aid for human review. Unknown values remain unknown. No artificial score is displayed.
+The actual completed-call transcript is sent through the existing Sarvam Chat provider. A dedicated extraction returns business, lead source, sales process, pain, qualification, explicit intent, and context. Every extracted business fact must carry a verbatim quote found in a prospect turn; facts with unmatched quotes are discarded. A quote match is a grounding check, not a guarantee of semantic correctness, so the result remains a sales aid for human review. Unknown values remain unknown. No artificial score is displayed.
 
 The sales summary appears before the expandable transcript. Suggested next steps do not claim any notification, booking, message, or callback occurred. The contact form persists inquiries but sends no email because this repository has no Resend integration.
 
@@ -27,4 +27,6 @@ The sales summary appears before the expandable transcript. Suggested next steps
 5. Test `/contact` with invalid values and then a clearly labeled test inquiry. Confirm database row and success state. Storage failures must retain details and show an error.
 6. Smoke-test `/projects`, `/projects/f-premiere`, and `/projects/f-premiere/agent` to ensure the property flow remains available.
 
-The connected Supabase project received exactly one labeled contact verification inquiry during local testing. Do not treat that test record as a business inquiry.
+The connected Supabase project received two labeled contact verification inquiries across local and production testing. Do not treat that test record as a business inquiry.
+
+Production verification on 2026-09-20: one authorized outbound call reached voicemail and completed through the real webhook with a 28-second transcript. This verified transport and persistence, but not conversational quality, interruptions or language switching with a human. The test exposed bare-null unknown facts, now normalized without relaxing evidence checks, and stale default greeting translations, regenerated in committed agent version 2. All eight automated tests, lint and production build pass. A human-answered call remains the final voice-quality check.

@@ -1,6 +1,6 @@
 # Contact page
 
-The `/contact` page extends the existing cream/black, Geist-based landing-page design. It reuses AppShell, Button, Input, existing design tokens, Zod, and the server-only Supabase admin client. The voice provider, webhook, transcript and intelligence pipeline are unchanged.
+The `/contact` page extends the existing cream/black, Geist-based landing-page design. It reuses AppShell, Button, Input, existing design tokens, Zod, and the server-only Supabase admin client. The contact form operates separately from the voice, webhook, transcript and intelligence pipeline.
 
 ## Deployment
 
@@ -16,7 +16,8 @@ No Resend integration exists in this repository. Email notifications and visitor
 
 - Run `node --test tests/contact.test.mjs` for malformed input, field validation, origin checking, missing configuration, database errors and confirmed persistence (mocked database boundary).
 - Run `npm run dev` and open `/contact` at desktop and mobile widths. Submit an empty form; verify field errors and focus on Name.
-- Complete every required field, leave Website blank, and submit. With Supabase configured, verify one row in `contact_inquiry` and the “Got it. We’ll be in touch.” state. Without configuration, verify an error and retained values. A live database submission must still be verified in the configured environment.
+- Complete every required field, leave Website blank, and submit. With Supabase configured, verify one row in `contact_inquiry` and the “Got it. We’ll be in touch.” state. Without configuration, verify an error and retained values. Labeled inquiries were saved during both local and production verification. The production success state and exactly one matching Production Verification row were confirmed.
 - Follow Contact in the header/footer and the secondary landing-page buttons. Complete a demo call and follow “Build this for my business.” Demo buttons remain the primary actions.
 
 The user subsequently expanded this work to include the full public demo journey. See `public-demo.md` for that flow and its separate Sarvam agent.
+

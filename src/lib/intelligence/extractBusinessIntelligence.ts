@@ -5,7 +5,9 @@ import { IntelligenceError } from "./extractConversationIntelligence";
 import type { ConversationIntelligence } from "./types";
 import type { TranscriptTurn } from "@/lib/types";
 
-const fact = z.object({ value: z.string().nullable(), evidence: z.string().nullable() });
+// Sarvam can represent an unknown fact as bare null. Preserve its meaning
+// without accepting unsupported strings or other malformed fact shapes.
+const fact = z.preprocess((value) => value === null ? { value: null, evidence: null } : value, z.object({ value: z.string().nullable(), evidence: z.string().nullable() }));
 const schema = z.object({ industry: fact, leadSource: fact, salesProcess: fact, mainProblem: fact, qualification: fact, intent: fact, context: fact });
 
 export async function extractBusinessIntelligence(transcript: TranscriptTurn[]): Promise<ConversationIntelligence> {
