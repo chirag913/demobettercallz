@@ -11,14 +11,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             bettercallz<span className="text-[var(--muted)]">.</span>
           </Link>
           <nav className="hidden items-center gap-8 text-sm text-[var(--muted)] md:flex">
-            <Link href="/projects" className="hover:text-[var(--foreground)]">Projects</Link>
             <Link href="/#demo" className="hover:text-[var(--foreground)]">Live demo</Link>
+            <Link href="/projects" className="hover:text-[var(--foreground)]">Projects</Link>
           </nav>
           <div className="flex items-center gap-3 sm:gap-5">
             <Link href="/contact" className="py-3 text-sm text-[var(--muted)] hover:text-[var(--foreground)]">Contact</Link>
-            <Button href="/#demo" size="sm">Try the AI</Button>
+            <Button href="/#demo" size="sm">Try the live call</Button>
           </div>
         </div>
+        <nav aria-label="Mobile navigation" className="flex items-center justify-center gap-8 border-t border-[var(--border)] px-6 text-sm text-[var(--muted)] md:hidden">
+          <Link href="/#demo" className="py-3 hover:text-[var(--foreground)]">Live demo</Link>
+          <Link href="/projects" className="py-3 hover:text-[var(--foreground)]">Projects</Link>
+        </nav>
       </header>
       <main className="flex-1">{children}</main>
       <footer className="border-t border-[var(--border)] py-8">

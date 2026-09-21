@@ -63,7 +63,7 @@ export function PublicDemo({ available }: { available: boolean }) {
       <input id="demo-phone" name="phone" value={phone} onChange={(event) => setPhone(event.target.value)} type="tel" autoComplete="tel-national" required maxLength={20} placeholder="98765 43210" aria-describedby="demo-phone-note" className="h-16 min-w-0 flex-1 bg-transparent px-4 text-xl outline-none placeholder:text-[var(--muted)]" />
     </div>
     <Button type="submit" size="lg" disabled={pending || !available} className="mt-3 h-16 w-full text-base">{pending ? <><Loader2 aria-hidden="true" className="h-4 w-4 animate-spin motion-reduce:animate-none" /> Starting your call…</> : <>LET IT CALL ME <ArrowRight aria-hidden="true" className="h-4 w-4" /></>}</Button>
-    <p id="demo-phone-note" className="mt-4 text-sm leading-relaxed text-[var(--muted)]">{available ? "Live AI voice demo · Takes about 60 seconds" : "Live calling is being connected. Contact us to arrange a demo."}</p>
+    <p id="demo-phone-note" className="mt-4 text-sm leading-relaxed text-[var(--muted)]">{available ? "Live sales call · ~60 seconds · No signup required" : "Live calling is being connected. Contact us to arrange a demo."}</p>
     <p className="mt-2 text-xs leading-relaxed text-[var(--muted)]">Use your own number. Submitting requests one AI call; its transcript is used to show your sales summary.</p>
     {error && <p role="alert" className="mt-4 text-sm text-[var(--restricted)]">{error}</p>}
   </form>;

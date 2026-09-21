@@ -5,19 +5,21 @@ export function BusinessReveal({ call, error, onRetry, onTryAgain }: { call: Cal
   const intelligence = call.conversationIntelligence;
   const business = intelligence?.business;
   return <section className="mx-auto max-w-4xl py-8">
-    <h2 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight md:text-5xl">Okay. Let’s see what it picked up.</h2>
-    <p className="mt-4 text-[var(--muted)]">From your conversation. Anything you didn’t tell us stays unknown.</p>
+    <h2 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight md:text-5xl">The call is only half the story.</h2>
+    <p className="mt-4 text-xl">Here’s what your salesperson needs to know.</p>
+    <p className="mt-3 text-sm leading-relaxed text-[var(--muted)]">From your actual conversation. Anything you didn’t tell us stays unknown.</p>
     {business ? <>
-      <dl className="mt-10 grid gap-x-10 sm:grid-cols-2">
+      <h3 className="mt-10 text-sm font-semibold uppercase tracking-wide">AI outcome · Conversation & qualification</h3>
+      <dl className="mt-4 grid gap-x-10 sm:grid-cols-2">
         {([ ["Business / industry", business.industry], ["Lead source", business.leadSource], ["Current sales process", business.salesProcess], ["Main problem", business.mainProblem], ["Qualification signals", business.qualification], ["Buying intent", business.intent], ["Important context", business.context] ] as const).map(([label, fact]) => <div key={label} className="border-t border-[var(--border)] py-5">
           <dt className="text-sm text-[var(--muted)]">{label}</dt>
-          <dd className="mt-2 text-lg font-medium">{fact.value ?? "Not shared"}</dd>
+          <dd className="mt-2 break-words text-lg font-medium">{fact.value ?? "Not shared"}</dd>
           {fact.evidence && <dd className="mt-2 text-sm leading-relaxed text-[var(--muted)]">“{fact.evidence}”</dd>}
         </div>)}
       </dl>
       <section className="mt-12 border-t border-[var(--border-strong)] pt-10">
-        <h3 className="max-w-xl text-3xl font-semibold tracking-tight">Your salesperson doesn’t need the whole conversation.</h3>
-        <p className="mt-3 text-[var(--muted)]">This is what your sales team would have received.</p>
+        <h3 className="max-w-xl text-3xl font-semibold tracking-tight">Ready for the human follow-up.</h3>
+        <p className="mt-3 text-[var(--muted)]">Suggested handoff for your sales team. The sales outcome is still to be determined.</p>
         <dl className="mt-6 space-y-5 rounded-[var(--radius-lg)] bg-[var(--foreground)] p-7 text-[var(--surface)]">
           {([ ["Who this person is", business.industry.value], ["Why they matter", business.qualification.value], ["What they said", business.context.value ?? business.leadSource.value], ["What they need", business.mainProblem.value], ["What to do next", intelligence.nextBestAction] ] as const).map(([label, value]) => <div key={label}><dt className="text-sm text-white/70">{label}</dt><dd className="mt-1 leading-relaxed">{value ?? "Not enough information shared"}</dd></div>)}
         </dl>
@@ -34,9 +36,9 @@ export function BusinessReveal({ call, error, onRetry, onTryAgain }: { call: Cal
       {call.recordingUrl && <audio className="mt-6 w-full" controls src={call.recordingUrl} />}
     </details>
     <div className="mt-14">
-      <h3 className="text-3xl font-semibold tracking-tight">Imagine this happening to every lead.</h3>
-      <p className="mt-4 leading-relaxed text-[var(--muted)]">Every Meta lead. Every missed call.<br />Every old lead sitting in your CRM.</p>
-      <div className="mt-6 flex flex-wrap gap-3"><Button href={onTryAgain ? undefined : "/#demo"} onClick={onTryAgain}>Try another call</Button><Button href="/contact" variant="secondary">Build this for my business</Button></div>
+      <h3 className="text-3xl font-semibold tracking-tight">Put BetterCallz on your next batch of leads.</h3>
+      <p className="mt-4 leading-relaxed text-[var(--muted)]">Start with the conversation. See what your sales team gets back.</p>
+      <div className="mt-6 flex flex-wrap gap-3"><Button href={onTryAgain ? undefined : "/#demo"} onClick={onTryAgain}>Try another call</Button><Button href="/contact" variant="secondary">Talk to BetterCallz</Button></div>
     </div>
   </section>;
 }
