@@ -1,7 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { deliverDemoLeadWithRetry, queueDemoLead } from "@/lib/demo-leads/deliver";
+import { PUBLIC_DEMO_ID } from "@/data/publicDemo";
 import { z } from "zod";
 import { getCall, getCallByProviderCallId, updateCall } from "@/lib/db/repository";
 import type { CallState, TranscriptTurn } from "@/lib/types";
+export const maxDuration = 180;
 
 /**
  * Handles Sarvam's Instant Outbound completion webhook
@@ -79,6 +82,15 @@ export async function POST(request: NextRequest) {
 
   // Idempotency: a terminal call that already recorded this attempt is left untouched.
   if ((call.status === "completed" || call.status === "failed") && call.providerCallId === payload.attempt_id) {
+    // A delayed transcript can complete a prior webhook without overwriting existing turns.
+    if (call.status === "completed" && !call.transcript?.length) {
+      const transcript = mapTranscript(payload.interaction_transcript);
+      if (transcript) await updateCall(call.id, { transcript });
+    }
+    if (call.projectId === PUBLIC_DEMO_ID && call.status === "completed") {
+      await queueDemoLead(call.id);
+      after(() => deliverDemoLeadWithRetry(call.id));
+    }
     return NextResponse.json({ ok: true, matched: true, duplicate: true });
   }
 
@@ -96,6 +108,11 @@ export async function POST(request: NextRequest) {
     transcript: mapTranscript(payload.interaction_transcript),
     endedAt: new Date().toISOString(),
   });
+
+  if (call.projectId === PUBLIC_DEMO_ID && payload.status === "connected") {
+    await queueDemoLead(call.id);
+    after(() => deliverDemoLeadWithRetry(call.id));
+  }
 
   return NextResponse.json({ ok: true, matched: true, connectivityStatus });
 }
