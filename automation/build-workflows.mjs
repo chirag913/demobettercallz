@@ -17,9 +17,9 @@ const normalize=`return $input.all().map((item,index)=>{
  if(digits.length===12 && digits.startsWith('91')) digits=digits.slice(2);
  if(digits.length===11 && digits.startsWith('0')) digits=digits.slice(1);
  if(!/^[6-9]\\d{9}$/.test(digits)) throw new Error('A valid Indian mobile number is required');
- const known=new Set(['phone_number','phone','full_name','first_name','last_name','name','email','company_name','company']);
+ const known=new Set(['phone_number','phone','full_name','first_name','last_name','surname','name','email','email_address','company_name','company']);
  const extras=Object.fromEntries(Object.entries(fields).filter(([k])=>!known.has(k)).slice(0,20).map(([k,v])=>[k.slice(0,100),str(v).slice(0,500)]));
- return {json:{source:'meta_lead_campaign',meta_lead_id:id,phone:'+91'+digits,name:str(fields.full_name || fields.name || [fields.first_name,fields.last_name].filter(Boolean).join(' ')).slice(0,200),email:str(fields.email),company:str(fields.company_name || fields.company).slice(0,300),form_id:str(lead.form?.id),page_id:str(lead.page?.id),form_context:str(lead.form?.name).slice(0,2000),additional_fields:extras},pairedItem:{item:index}};
+ return {json:{source:'meta_lead_campaign',meta_lead_id:id,phone:'+91'+digits,name:str(fields.full_name || fields.name || [fields.first_name,fields.last_name || fields.surname].filter(Boolean).join(' ')).slice(0,200),email:str(fields.email || fields.email_address),company:str(fields.company_name || fields.company).slice(0,300),form_id:str(lead.form?.id),page_id:str(lead.page?.id),form_context:str(lead.form?.name).slice(0,2000),additional_fields:extras},pairedItem:{item:index}};
 });`;
 const intake={name:'BetterCallz — Meta Lead → Instant AI Call',active:false,nodes:[
  node('BetterCallz Meta Lead','facebookLeadAdsTrigger',{event:'newLead',page:{__rl:true,mode:'id',value:''},form:{__rl:true,mode:'id',value:''},options:{simplifyOutput:false}},[0,0]),

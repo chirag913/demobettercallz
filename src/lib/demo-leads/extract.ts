@@ -10,7 +10,7 @@ const fact = z.object({ value: z.string().max(2000).nullable(), evidence: z.stri
 const nullableFact = fact.nullable();
 const schema = z.object({ facts: z.object(Object.fromEntries(FACT_FIELDS.map(key => [key, nullableFact])) as Record<typeof FACT_FIELDS[number], typeof nullableFact>), buying_intent: z.object({ value: z.enum(intents), evidence: z.string().nullable() }) });
 export type DemoLead = Record<typeof HEADERS[number], string>;
-export function groundExtraction(raw: unknown, transcript: TranscriptTurn[], metadata: { timestamp: string; phone: string }): DemoLead {
+export function groundExtraction(raw: unknown, transcript: TranscriptTurn[], metadata: { timestamp: string; phone: string; source?: "meta_lead_campaign" }): DemoLead {
   const parsed = schema.parse(raw);
   const turns = transcript.filter(t => t.speaker === "prospect").map(t => t.text);
   const supported = (entry: { value: string | null; evidence: string | null } | null | undefined) => Boolean(entry?.value?.trim() && entry.evidence?.trim() && turns.some(t => t.includes(entry.evidence!)));
@@ -32,6 +32,39 @@ export function groundExtraction(raw: unknown, transcript: TranscriptTurn[], met
     }
   }
   row.buying_intent = supported(parsed.buying_intent) ? parsed.buying_intent.value : "Unknown";
+  if (metadata.source === "meta_lead_campaign") {
+    // Preserve explicit answers when the model omits them. Agent questions supply
+    // context only; an agent suggestion alone never becomes a prospect fact.
+    const assent = /^(?:(?:yes|yeah|yep|sure|okay|ok|please|haan|han|ji|हाँ|हां|जी)[\s,.!।]*)+$/i;
+    const refusal = /^(?:no|nope|nah|nahi|nahin|नहीं|नही)\b/i;
+    const humanOffer = /(?:would you like|do you want|shall|can|क्या|चाहेंगे|चाहते)/i;
+    const humanAction = /(?:speak|talk|discuss|call|connect|बात|कॉल)/i;
+    const humanTarget = /(?:our team|sales team|human|person|someone|टीम|इंसान)/i;
+    for (let i = 0; i < transcript.length; i++) {
+      const turn = transcript[i], previous = transcript[i - 1];
+      if (turn.speaker !== "prospect") continue;
+      const answer = turn.text.trim();
+      if (!row.current_lead_process && /\bI (?:make|do|handle) (?:the |all |my )?calls? manually\b|\bI (?:call|phone) (?:the |my )?leads? (?:myself|manually)\b/i.test(answer)) row.current_lead_process = answer;
+      const offeredHuman = previous?.speaker === "agent" && humanOffer.test(previous.text) && humanAction.test(previous.text) && humanTarget.test(previous.text);
+      if (offeredHuman && refusal.test(answer)) {
+        row.preferred_next_step = "";
+        if (row.buying_intent === "Ready to talk") row.buying_intent = "Unknown";
+      }
+      if (offeredHuman && assent.test(answer)) {
+        row.preferred_next_step = "Human sales call";
+        if (!["Not interested", "Just testing"].includes(row.buying_intent)) row.buying_intent = "Ready to talk";
+      }
+      if (previous?.speaker === "agent" && /(?:leads?|enquir|inquir)/i.test(previous.text) && numberOnly.test(answer)) {
+        const period = /(?:per day|a day|daily|each day)/i.test(previous.text) ? "per day" : /(?:per week|a week|weekly|each week)/i.test(previous.text) ? "per week" : null;
+        if (period) {
+          // Keep the observed period; never multiply it into a monthly estimate.
+          row.monthly_lead_volume = "";
+          const volume = `Lead volume: ${answer.replace(/[.!]$/, "")} ${period}.`;
+          row.notes = row.notes === answer ? volume : [row.notes, volume].filter(Boolean).join(" ");
+        }
+      }
+    }
+  }
   row.interest_level = ({ "Ready to talk": "Hot", Interested: "Warm", Exploring: "Warm", "Just testing": "Cold", "Not interested": "Not Interested", Unknown: "Unknown" } as Record<string,string>)[row.buying_intent] ?? "Unknown";
   // Build the summary ONLY from grounded fields, never a second unverified narrative.
   const sentences = [

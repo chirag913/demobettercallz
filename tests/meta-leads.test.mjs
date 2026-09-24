@@ -47,6 +47,8 @@ test('n8n normalization handles actual unsimplified and simplified Meta payloads
  const result=run({id:'123',field_data:[{name:'full_name',values:['Raj']},{name:'phone_number',values:['+91 99713 65666']},{name:'company_name',values:['XYZ']},{name:'interest',values:['Lead automation']}],form:{id:'456',name:'BetterCallz enquiry'},page:{id:'789'}});
  assert.equal(result.phone,'+919971365666');assert.equal(result.name,'Raj');assert.equal(result.additional_fields.interest,'Lead automation');assert.equal(result.form_context,'BetterCallz enquiry');
  assert.equal(run({id:'123',data:{phone_number:'9971365666',full_name:'Raj'}}).name,'Raj');
+ const generatedForm=run({id:'123',data:{phone_number:'9971365666',first_name:'Chirag',surname:'Sharma',email_address:'lead@example.com'}});
+ assert.equal(generatedForm.name,'Chirag Sharma');assert.equal(generatedForm.email,'lead@example.com');
  assert.throws(()=>run({id:'123',data:{phone_number:'123'}}));assert.throws(()=>run({data:{phone_number:'9971365666'}}));
 });
 test('n8n output refuses to overwrite a different lead and only acknowledges confirmed writes',()=>{

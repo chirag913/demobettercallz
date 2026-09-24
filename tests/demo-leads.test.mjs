@@ -35,3 +35,20 @@ test('an ambiguous old email is held for review, and property calls never send d
 
 test('monthly question supplies context to a terse range without inventing a period',()=>{const raw=empty();raw.facts.notes={value:'The stated period is not monthly',evidence:'Four hundred five hundred.'};const row=x.groundExtraction(raw,[{speaker:'agent',text:'How many new enquiries do you receive in a month?'},{speaker:'prospect',text:'Four hundred five hundred.'}],meta);assert.equal(row.monthly_lead_volume,'Four hundred five hundred');assert.equal(row.notes,'');});
 test('daily response never becomes a monthly count, and causal embellishments are removed',()=>{const raw=empty();raw.facts.pain_points={value:'Leads are lost due to high volume',evidence:"Some leads don't get a call on time."};const row=x.groundExtraction(raw,[{speaker:'agent',text:'How many leads in a month?'},{speaker:'prospect',text:'20 per day'},{speaker:'prospect',text:"Some leads don't get a call on time."}],meta);assert.equal(row.monthly_lead_volume,'');assert.equal(row.pain_points,"Some leads don't get a call on time.");});
+test('Meta follow-up preserves manual process, daily period and explicit human-call assent when model omits them',()=>{
+ const row=x.groundExtraction(empty(),[
+  {speaker:'prospect',text:"I don't have any solution right now. I make calls manually."},
+  {speaker:'agent',text:'Approximately how many leads do you get in a day?'},{speaker:'prospect',text:'Twenty to thirty.'},
+  {speaker:'agent',text:'Would you like to speak with our team about this?'},{speaker:'prospect',text:'Yes, yes.'}
+ ],{...meta,source:'meta_lead_campaign'});
+ assert.match(row.current_lead_process,/I make calls manually/);assert.equal(row.monthly_lead_volume,'');assert.match(row.notes,/Twenty to thirty per day/);
+ assert.equal(row.preferred_next_step,'Human sales call');assert.equal(row.buying_intent,'Ready to talk');assert.match(row.call_summary,/Human sales call/);
+});
+test('Meta enquiry confirmation, vague agreement and refused human offer do not create a handoff',()=>{
+ for(const answer of ['No, thank you.','Maybe later.','It sounds interesting.']) {
+  const row=x.groundExtraction(empty(),[{speaker:'agent',text:'Would you like to speak with our team?'},{speaker:'prospect',text:answer}],{...meta,source:'meta_lead_campaign'});
+  assert.equal(row.preferred_next_step,'');assert.equal(row.buying_intent,'Unknown');
+ }
+ const row=x.groundExtraction(empty(),[{speaker:'agent',text:'You just made an enquiry, right?'},{speaker:'prospect',text:'Yes.'}],{...meta,source:'meta_lead_campaign'});
+ assert.equal(row.preferred_next_step,'');assert.equal(row.buying_intent,'Unknown');
+});
