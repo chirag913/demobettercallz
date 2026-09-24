@@ -53,7 +53,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "return ($input.first().json.results || []).map(r=>{if(!Number.isSafeInteger(r.sheet_row)||r.sheet_row<2||r.sheet_row>10000||!Array.isArray(r.sheet_payload)||r.sheet_payload.length!==26)throw new Error('Invalid output or sales log capacity reached');return {json:r};});"
+        "jsCode": "return ($input.first().json.results || []).map(r=>{if(!Number.isSafeInteger(r.sheet_row)||r.sheet_row<2||r.sheet_row>10000||!Array.isArray(r.sheet_payload)||r.sheet_payload.length!==32)throw new Error('Invalid output or sales log capacity reached');return {json:r};});"
       }
     },
     {
@@ -68,7 +68,7 @@
       "parameters": {
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleSheetsOAuth2Api",
-        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1mzPVfZFtDDm4qaTCk7asGLItkvxs25VTlHj0K0w0iwg/values/Leads!A' + $json.sheet_row + ':Z' + $json.sheet_row }}",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1mzPVfZFtDDm4qaTCk7asGLItkvxs25VTlHj0K0w0iwg/values/Leads!A' + $json.sheet_row + ':AF' + $json.sheet_row }}",
         "options": {
           "timeout": 30000
         }
@@ -87,7 +87,7 @@
       ],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const result=$('Each result').item.json;const existing=$json.values?.[0]||[];if(existing.some(v=>String(v)!=='') && (existing[2]!==result.meta_lead_id || existing[20]!==result.call_id))throw new Error('Allocated row belongs to another record. Restore row order; refusing to overwrite a lead.');return {json:result};"
+        "jsCode": "const result=$('Each result').item.json;const existing=$json.values?.[0]||[];if(existing.some(v=>String(v)!=='') && (existing[2]!==result.meta_lead_id))throw new Error('Allocated row belongs to another record. Restore row order; refusing to overwrite a lead.');return {json:result};"
       }
     },
     {
@@ -103,7 +103,7 @@
         "authentication": "predefinedCredentialType",
         "nodeCredentialType": "googleSheetsOAuth2Api",
         "method": "PUT",
-        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1mzPVfZFtDDm4qaTCk7asGLItkvxs25VTlHj0K0w0iwg/values/Leads!A' + $json.sheet_row + ':Z' + $json.sheet_row + '?valueInputOption=RAW' }}",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1mzPVfZFtDDm4qaTCk7asGLItkvxs25VTlHj0K0w0iwg/values/Leads!A' + $json.sheet_row + ':AF' + $json.sheet_row + '?valueInputOption=RAW' }}",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={{ {values: [$json.sheet_payload]} }}",
@@ -144,7 +144,7 @@
         "url": "https://demo.bettercallz.com/api/meta-leads/results",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {call_id:$json.call_id,sheet_row:$json.sheet_row} }}",
+        "jsonBody": "={{ {call_id:$json.call_id,sheet_row:$json.sheet_row,sheet_revision:$json.sheet_revision} }}",
         "options": {
           "timeout": 60000
         }

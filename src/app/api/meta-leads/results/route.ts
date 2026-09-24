@@ -1,3 +1,5 @@
+import { processDueMetaCalls } from "@/lib/meta-leads/intake";
+import { campaignSheetSnapshot } from "@/lib/meta-leads/results";
 import { after, NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { isMetaAuthorized } from "@/lib/meta-leads/input";
@@ -10,6 +12,7 @@ export async function GET(request: NextRequest) {
   if(!isMetaAuthorized(request.headers.get("authorization"))) return NextResponse.json({error:"Unauthorized"},{status:401});
   const admin=getSupabaseAdmin();
   if(!admin) return NextResponse.json({error:"Unavailable"},{status:503});
+  after(() => processDueMetaCalls());
   const now=new Date().toISOString();
   const retry=await admin.from("meta_lead_pending_delivery").select("call_id").lte("next_delivery_attempt_at",now).order("next_delivery_attempt_at").limit(2);
   if(retry.error) return NextResponse.json({error:"Unavailable"},{status:503});
@@ -17,16 +20,16 @@ export async function GET(request: NextRequest) {
     const claimed=await admin.from("meta_lead_request").update({next_delivery_attempt_at:new Date(Date.now()+300000).toISOString()}).eq("call_id",row.call_id).lte("next_delivery_attempt_at",now).select("call_id").maybeSingle();
     if(claimed.data) after(()=>deliverDemoLeadWithRetry(row.call_id));
   }
-  const results=await admin.from("meta_lead_request").select("meta_lead_id,call_id,sheet_row,sheet_payload").not("sheet_payload","is",null).is("sheet_delivered_at",null).order("sheet_row").limit(50);
+  const results=await admin.from("meta_lead_request").select("*").is("sheet_delivered_at",null).order("sheet_row").limit(50);
   if(results.error) return NextResponse.json({error:"Unavailable"},{status:503});
-  return NextResponse.json({results:results.data}, {headers:{"Cache-Control":"no-store"}});
+  return NextResponse.json({results:results.data.map(row => ({meta_lead_id:row.meta_lead_id,call_id:row.call_id,sheet_row:row.sheet_row,sheet_revision:row.sheet_revision,sheet_payload:campaignSheetSnapshot(row)}))}, {headers:{"Cache-Control":"no-store"}});
 }
 export async function POST(request:NextRequest) {
   if(!isMetaAuthorized(request.headers.get("authorization"))) return NextResponse.json({error:"Unauthorized"},{status:401});
-  const parsed=z.object({call_id:z.uuid(),sheet_row:z.number().int().min(2)}).safeParse(await request.json().catch(()=>null));
+  const parsed=z.object({call_id:z.uuid(),sheet_row:z.number().int().min(2),sheet_revision:z.number().int().min(1)}).safeParse(await request.json().catch(()=>null));
   if(!parsed.success) return NextResponse.json({error:"Invalid acknowledgement"},{status:400});
   const admin=getSupabaseAdmin();
   if(!admin) return NextResponse.json({error:"Unavailable"},{status:503});
-  const result=await admin.from("meta_lead_request").update({sheet_delivered_at:new Date().toISOString()}).eq("call_id",parsed.data.call_id).eq("sheet_row",parsed.data.sheet_row).not("sheet_payload","is",null).select("call_id").maybeSingle();
+  const result=await admin.from("meta_lead_request").update({sheet_delivered_at:new Date().toISOString()}).eq("call_id",parsed.data.call_id).eq("sheet_row",parsed.data.sheet_row).eq("sheet_revision",parsed.data.sheet_revision).select("call_id").maybeSingle();
   return result.error||!result.data ? NextResponse.json({error:"Not acknowledged"},{status:409}):NextResponse.json({ok:true});
 }

@@ -20,7 +20,7 @@ export async function deliverDemoLead(callId: string): Promise<void> {
   if (!admin) throw new Error("Durable lead delivery storage is unavailable");
   const call = await getCall(callId);
   const meta = call?.projectId === META_PROJECT_ID;
-  if (!call || (!meta && call.projectId !== PUBLIC_DEMO_ID) || call.mode !== "real" || (call.status !== "completed" && !(meta && call.status === "failed"))) return;
+  if (!call || (!meta && call.projectId !== PUBLIC_DEMO_ID) || call.mode !== "real" || call.status !== "completed") return;
   if (call.status === "completed" && !call.transcript?.length) throw new Error("Completed call transcript is not available yet");
   const table = () => admin.from("demo_lead_delivery");
   const inserted = await table().upsert({ call_id: callId }, { onConflict: "call_id", ignoreDuplicates: true });

@@ -233,3 +233,7 @@ Per the product brief: Salesforce, WhatsApp, lead scoring / Lead DNA, property m
 full CRM, billing, advanced analytics, site-visit scheduling, campaign management, multi-tenancy, and
 enterprise permissions. The "View Lead Intelligence →" button on the call result page is present but
 disabled, showing "Coming in the next phase" — this is the intentional seam for that future work.
+
+## Meta campaign retries
+
+See [automation/RETRIES.md](automation/RETRIES.md) for the three-attempt policy, IST quiet hours, atomic dispatch/recovery and coordinated backend/Sheet/workflow rollout. Apply migration 0008 once; existing leads are held rather than automatically redialled.

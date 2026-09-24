@@ -1,3 +1,4 @@
+import { finalizeMetaAttempt } from "@/lib/meta-leads/retry-service";
 import { after, NextRequest, NextResponse } from "next/server";
 import { deliverDemoLeadWithRetry, queueDemoLead } from "@/lib/demo-leads/deliver";
 import { PUBLIC_DEMO_ID } from "@/data/publicDemo";
@@ -81,6 +82,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, matched: false });
   }
 
+  if (call.projectId === META_PROJECT_ID && call.providerCallId && call.providerCallId !== payload.attempt_id) return NextResponse.json({ error: "Attempt mismatch" }, { status: 409 });
+
   // Idempotency: a terminal call that already recorded this attempt is left untouched.
   if ((call.status === "completed" || call.status === "failed") && call.providerCallId === payload.attempt_id) {
     // A delayed transcript can complete a prior webhook without overwriting existing turns.
@@ -88,7 +91,8 @@ export async function POST(request: NextRequest) {
       const transcript = mapTranscript(payload.interaction_transcript);
       if (transcript) await updateCall(call.id, { transcript });
     }
-    if ((call.projectId === PUBLIC_DEMO_ID && call.status === "completed") || call.projectId === META_PROJECT_ID) {
+    if (call.projectId === META_PROJECT_ID) await finalizeMetaAttempt(call.id, payload);
+    if ((call.projectId === PUBLIC_DEMO_ID || call.projectId === META_PROJECT_ID) && call.status === "completed") {
       await queueDemoLead(call.id);
       after(() => deliverDemoLeadWithRetry(call.id));
     }
@@ -110,7 +114,8 @@ export async function POST(request: NextRequest) {
     endedAt: new Date().toISOString(),
   });
 
-  if ((call.projectId === PUBLIC_DEMO_ID && payload.status === "connected") || call.projectId === META_PROJECT_ID) {
+  if (call.projectId === META_PROJECT_ID) await finalizeMetaAttempt(call.id, payload);
+  if ((call.projectId === PUBLIC_DEMO_ID || call.projectId === META_PROJECT_ID) && payload.status === "connected") {
     await queueDemoLead(call.id);
     after(() => deliverDemoLeadWithRetry(call.id));
   }
