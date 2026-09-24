@@ -109,7 +109,8 @@ test('application dispatch orchestration recovers preflight errors and never rep
   const input=id=>({source:'meta_lead_campaign',meta_lead_id:id,phone:'+919999999999'});
   configured=false;await assert.rejects(api.startMetaCall(input('missing-config')));assert.equal(await row('missing-config'),undefined);configured=true;
   readFails=true;await assert.rejects(api.startMetaCall(input('preflight')));assert.equal((await row('preflight')).attempt_count,1);assert.equal(sends,0);
-  readFails=false;await api.startMetaCall(input('preflight'));assert.equal((await row('preflight')).attempt_count,1);assert.equal(sends,1);
+  readFails=false;await api.startMetaCall(input('preflight'));assert.equal(sends,0);
+  await api.dispatchMetaAttempt('preflight');assert.equal((await row('preflight')).attempt_count,1);assert.equal(sends,1);
   sendFails=true;await api.startMetaCall(input('ambiguous'));assert.equal((await row('ambiguous')).retry_status,'REVIEW');
   await Promise.all(Array.from({length:10},()=>api.startMetaCall(input('ambiguous'))));assert.equal(sends,2);
 });

@@ -37,3 +37,7 @@ Rollback: stop the output schedule and stop campaign intake, or set pending camp
 `node --test tests/*.test.mjs`, `npx tsc --noEmit`, targeted ESLint, `npm run build`.
 
 Retry tests run actual migration/RPC SQL in PGlite, with only the database clock substituted. Concurrent Promise callers test claims and dispatch gates; PGlite serializes a single connection, so this is not a multi-session production load test. No test calls external telephony or sends email. Existing website/delivery tests remain included.
+
+## Live rollout verification — 25 September 2026
+
+Migration 0008 was applied transactionally to the existing BetterCallz Supabase project. The existing output workflow was published as “BetterCallz controlled retries and same-row tracking”. Its live run updated and acknowledged all three historical rows at 2026-09-24 23:39 UTC. Each remained LEGACY_HOLD with one attempt and no next_retry_at. No real call was placed during verification. The existing Leads tab has the six new headers in AA1:AF1; its prior rows and 26 original columns remain in place. The production scheduling RPC returned 10:00 IST the next day for a 23:00 IST arrival.

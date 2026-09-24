@@ -20,7 +20,7 @@ export function getNextCallTime(attemptNumber: number, currentTime = new Date())
 
 export function classifyMetaOutcome(payload: {status: string; failure_reason?: string | null; duration?: number | null; interaction_id?: string | null; interaction_transcript?: unknown[] | null}): RetryOutcome {
   const reason = (payload.failure_reason || "").toLowerCase();
-  if (/\b(dnd|ndnc|do.not.call|refused|opt.out)\b/.test(reason)) return "DO_NOT_CALL";
+  if (/\b(dnd|ndnc|do.not.call|refused|declined|opt.out|not interested|stop calling|don't call)\b/.test(reason)) return "DO_NOT_CALL";
   if (/\b(wrong|invalid|unallocated|disconnected) (?:phone )?number\b/.test(reason)) return "WRONG_NUMBER";
   if (payload.status === "connected") return "COMPLETED";
   // Conflicting evidence is never permission to redial.

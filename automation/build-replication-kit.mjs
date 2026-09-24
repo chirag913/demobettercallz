@@ -206,7 +206,7 @@ await write('OPERATIONS.md',`# Operations and handover
 
 Meta Page/form → n8n normalization → authenticated POST /api/calls → atomic Supabase reservation → Sarvam outbound → /api/webhooks/sarvam → transcript + grounded extraction → Resend outbox and fixed Sheet row queue → n8n Sheets write → backend acknowledgement.
 
-The output workflow polls every minute. Extraction/email retries use a five-minute scheduling lease. Email and Sheet retries are independent.
+The output workflow polls every minute and also claims due Meta call attempts. See RETRIES.md for the three-attempt limit and IST quiet hours. Extraction/email retries use a five-minute scheduling lease. Email and Sheet retries are independent. Failed calls do not send qualification emails.
 
 ## Common failures
 
@@ -227,7 +227,7 @@ The output workflow polls every minute. Extraction/email retries use a five-minu
 
 POST /api/calls for Meta uses source=meta_lead_campaign, stable meta_lead_id and phone; optional name, email, company, form_id, page_id, form_context and additional_fields. The first payload is immutable. A duplicate returns the current attempt callId without dispatching another attempt. Website calls use the original projectId/phone contract and retain website_demo source.
 
-Sheet allocation starts at row 2 and supports 9,999 leads with the current 10,000-row guard. Extend the grid and workflow guard together. Never reset the row sequence against an existing log. Writes use RAW input, and acknowledgement requires a successful one-row Google response.
+Sheet allocation starts at row 2 and supports 9,999 leads with the current 10,000-row guard. Extend the grid and workflow guard together. Never reset the row sequence against an existing log. Writes use RAW input, and acknowledgement requires a successful one-row Google response and the matching sheet_revision. Columns AA:AF hold retry metadata.
 
 ## What must be backed up separately
 

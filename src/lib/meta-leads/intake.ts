@@ -22,7 +22,8 @@ export async function startMetaCall(input: MetaLeadInput) {
   // PostgREST can represent a composite return as a one-row array.
   const record = Array.isArray(reserved.data) ? reserved.data[0] : reserved.data;
   if (!record?.call_id || record.meta_lead_id !== input.meta_lead_id) throw new Error("Invalid Meta reservation");
-  const result = await dispatchMetaAttempt(input.meta_lead_id);
+  // Webhook replays never initiate later attempts. Only the due worker owns retries.
+  const result = record.attempt_count === 0 ? await dispatchMetaAttempt(input.meta_lead_id) : null;
   return result || { callId: record.call_id, duplicate: true, dispatchState: record.dispatch_state, status: record.retry_status, nextRetryAt: record.next_retry_at };
 }
 
