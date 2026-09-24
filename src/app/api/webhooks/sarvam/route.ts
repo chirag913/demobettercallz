@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { deliverDemoLeadWithRetry, queueDemoLead } from "@/lib/demo-leads/deliver";
 import { PUBLIC_DEMO_ID } from "@/data/publicDemo";
+import { META_PROJECT_ID } from "@/lib/meta-leads/constants";
 import { z } from "zod";
 import { getCall, getCallByProviderCallId, updateCall } from "@/lib/db/repository";
 import type { CallState, TranscriptTurn } from "@/lib/types";
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       const transcript = mapTranscript(payload.interaction_transcript);
       if (transcript) await updateCall(call.id, { transcript });
     }
-    if (call.projectId === PUBLIC_DEMO_ID && call.status === "completed") {
+    if ((call.projectId === PUBLIC_DEMO_ID && call.status === "completed") || call.projectId === META_PROJECT_ID) {
       await queueDemoLead(call.id);
       after(() => deliverDemoLeadWithRetry(call.id));
     }
@@ -109,7 +110,7 @@ export async function POST(request: NextRequest) {
     endedAt: new Date().toISOString(),
   });
 
-  if (call.projectId === PUBLIC_DEMO_ID && payload.status === "connected") {
+  if ((call.projectId === PUBLIC_DEMO_ID && payload.status === "connected") || call.projectId === META_PROJECT_ID) {
     await queueDemoLead(call.id);
     after(() => deliverDemoLeadWithRetry(call.id));
   }

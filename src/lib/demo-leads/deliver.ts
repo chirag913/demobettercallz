@@ -4,7 +4,9 @@ import { getSupabaseAdmin } from "@/lib/supabase/admin";
 import { getCall } from "@/lib/db/repository";
 import { PUBLIC_DEMO_ID } from "@/data/publicDemo";
 import { extractDemoLead, type DemoLead } from "./extract";
-import { makeLeadEmail, sendLeadEmail, type LeadEmail } from "./email";
+import { makeLeadEmail, makeMetaLeadEmail, sendLeadEmail, type LeadEmail } from "./email";
+import { META_PROJECT_ID } from "@/lib/meta-leads/constants";
+import { prepareMetaSheet } from "@/lib/meta-leads/results";
 
 export async function queueDemoLead(callId: string): Promise<void> {
   const admin = getSupabaseAdmin();
@@ -17,8 +19,9 @@ export async function deliverDemoLead(callId: string): Promise<void> {
   const admin = getSupabaseAdmin();
   if (!admin) throw new Error("Durable lead delivery storage is unavailable");
   const call = await getCall(callId);
-  if (!call || call.projectId !== PUBLIC_DEMO_ID || call.mode !== "real" || call.status !== "completed") return;
-  if (!call.transcript?.length) throw new Error("Completed call transcript is not available yet");
+  const meta = call?.projectId === META_PROJECT_ID;
+  if (!call || (!meta && call.projectId !== PUBLIC_DEMO_ID) || call.mode !== "real" || (call.status !== "completed" && !(meta && call.status === "failed"))) return;
+  if (call.status === "completed" && !call.transcript?.length) throw new Error("Completed call transcript is not available yet");
   const table = () => admin.from("demo_lead_delivery");
   const inserted = await table().upsert({ call_id: callId }, { onConflict: "call_id", ignoreDuplicates: true });
   if (inserted.error) throw new Error("Could not queue demo lead");
@@ -42,10 +45,11 @@ export async function deliverDemoLead(callId: string): Promise<void> {
     if (!data) {
       const lead = await admin.from("lead").select("phone").eq("id", call.leadId).single();
       if (lead.error || !lead.data?.phone) throw new Error("Original call phone is unavailable");
-      data = await extractDemoLead(call.transcript, { phone: lead.data.phone, timestamp: call.startedAt || call.createdAt });
+      data = await extractDemoLead(call.transcript || [], { phone: lead.data.phone, timestamp: call.startedAt || call.createdAt, ...(meta ? {source: "meta_lead_campaign" as const} : {}) });
       await save({ lead_data: data });
     }
-    const payload = (record.email_payload as LeadEmail | null) || makeLeadEmail(data, callId);
+    const campaign = meta ? await prepareMetaSheet(call, data) : null;
+    const payload = (record.email_payload as LeadEmail | null) || (campaign ? makeMetaLeadEmail(data, callId, campaign.meta_lead_id, call.status) : makeLeadEmail(data, callId));
     // Save exact request before sending so retries use the identical idempotency payload.
     if (!record.email_payload) await save({ email_payload: payload });
     if (!record.first_send_at) await save({ first_send_at: new Date().toISOString() });

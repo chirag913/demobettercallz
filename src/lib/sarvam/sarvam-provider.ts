@@ -3,6 +3,7 @@ import { getSarvamConfig } from "./config";
 import { buildAgentInstructions } from "./agent-prompt";
 import { PUBLIC_DEMO_ID } from "@/data/publicDemo";
 import { PUBLIC_DEMO_PROMPT } from "./public-demo-prompt";
+import { META_PROJECT_ID } from "@/lib/meta-leads/constants";
 import type { CallStatusResult, CreateCallParams, CreateCallResult, TranscriptResult, VoiceProvider } from "./types";
 
 const SARVAM_BASE_URL = "https://apps.sarvam.ai/api/outbounds/v1";
@@ -21,7 +22,8 @@ export class SarvamVoiceProvider implements VoiceProvider {
 
   async createCall(params: CreateCallParams): Promise<CreateCallResult> {
     const publicDemo = params.projectContext.projectId === PUBLIC_DEMO_ID;
-    const config = getSarvamConfig(publicDemo);
+    const metaCampaign = params.projectContext.projectId === META_PROJECT_ID;
+    const config = getSarvamConfig(publicDemo, metaCampaign);
     if (!config) {
       throw new Error("Sarvam is not configured. Set SARVAM_API_KEY, SARVAM_AGENT_ID, SARVAM_PHONE_NUMBER and related vars.");
     }
@@ -40,7 +42,7 @@ export class SarvamVoiceProvider implements VoiceProvider {
           connection_id: config.connectionId,
           agent_phone_number: config.agentPhoneNumber,
         },
-        agent_variables: publicDemo ? {} : {
+        agent_variables: metaCampaign ? { lead_context: params.leadContext || "{}" } : publicDemo ? {} : {
           agent_instructions: instructions,
           project_name: params.projectContext.projectName,
           ...(userName ? { user_name: userName } : {}),

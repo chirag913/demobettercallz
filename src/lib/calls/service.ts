@@ -1,6 +1,7 @@
 import "server-only";
 import { createLead, createCall, getCall, updateCall } from "@/lib/db/repository";
 import { getVoiceProvider, isRealMode, type ProjectContext } from "@/lib/sarvam";
+import type { CreateCallParams, VoiceProvider } from "@/lib/sarvam/types";
 import { buildAgentKnowledgeBrief, getProject, getRestrictedTopics } from "@/lib/knowledge/service";
 import { normalizeIndianPhone } from "@/lib/phone";
 import { buildDemoTranscript, simulateDemoCallState, DEMO_CALL_LANGUAGE } from "@/lib/sarvam/demo-provider";
@@ -43,7 +44,7 @@ export async function startCall(input: { projectId: string; phone: string; name?
   const provider = publicDemo ? new SarvamVoiceProvider() : getVoiceProvider();
   const mode: CallRecord["mode"] = publicDemo || isRealMode() ? "real" : "demo";
 
-  let call = await createCall({
+  const call = await createCall({
     leadId: lead.id,
     projectId: input.projectId,
     provider: provider.name,
@@ -55,13 +56,18 @@ export async function startCall(input: { projectId: string; phone: string; name?
   const projectContext = projectContextFor(project.id);
   if (!projectContext) throw new CallServiceError("Project knowledge is temporarily unavailable.");
 
-  try {
-    const result = await provider.createCall({
+  return dispatchStoredCall(call, provider, {
       callId: call.id,
       phoneNumber: normalizedPhone,
       projectContext,
       userName: input.name,
-    });
+  });
+}
+
+/** Both website and campaign dispatch use the same provider and terminal-state race protection. */
+export async function dispatchStoredCall(call: CallRecord, provider: VoiceProvider, params: CreateCallParams): Promise<CallRecord> {
+  try {
+    const result = await provider.createCall(params);
     const updated = await updateCall(call.id, {
       providerCallId: result.providerCallId,
       interactionId: result.interactionId,
@@ -69,7 +75,7 @@ export async function startCall(input: { projectId: string; phone: string; name?
       startedAt: new Date().toISOString(),
     }, true);
     if (!updated) throw new CallServiceError("Call could not be started.");
-    call = updated;
+    return updated;
   } catch (err) {
     await updateCall(call.id, {
       status: "failed",
@@ -78,7 +84,6 @@ export async function startCall(input: { projectId: string; phone: string; name?
     throw new CallServiceError("We couldn't connect the call. Please try again.");
   }
 
-  return call;
 }
 
 /**

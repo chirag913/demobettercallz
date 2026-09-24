@@ -4,6 +4,8 @@ import { buildAgentKnowledgeBrief, getProject } from "@/lib/knowledge/service";
 import { extractConversationIntelligence, IntelligenceError } from "@/lib/intelligence/extractConversationIntelligence";
 import { extractBusinessIntelligence } from "@/lib/intelligence/extractBusinessIntelligence";
 import { PUBLIC_DEMO_ID } from "@/data/publicDemo";
+import { META_PROJECT_ID } from "@/lib/meta-leads/constants";
+import { isMetaAuthorized } from "@/lib/meta-leads/input";
 
 // The Sarvam chat completion this route waits on can take up to ~25-30s.
 // Vercel's default serverless timeout (10s on Hobby) isn't enough headroom.
@@ -26,7 +28,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Conversation intelligence is temporarily unavailable." }, { status: 500 });
   }
 
-  if (!call) {
+  if (!call || (call.projectId === META_PROJECT_ID && !isMetaAuthorized(request.headers.get("authorization")))) {
     return NextResponse.json({ error: "Call not found." }, { status: 404 });
   }
 
@@ -39,15 +41,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   }
 
   const project = getProject(call.projectId);
-  if (!project) {
+  if (!project && call.projectId !== META_PROJECT_ID) {
     return NextResponse.json({ error: "Project knowledge is temporarily unavailable." }, { status: 500 });
   }
 
   try {
-    const intelligence = call.projectId === PUBLIC_DEMO_ID ? await extractBusinessIntelligence(call.transcript ?? []) : await extractConversationIntelligence({
+    const intelligence = [PUBLIC_DEMO_ID,META_PROJECT_ID].includes(call.projectId) ? await extractBusinessIntelligence(call.transcript ?? []) : await extractConversationIntelligence({
       transcript: call.transcript ?? [],
-      projectName: project.name,
-      knowledgeBrief: buildAgentKnowledgeBrief(project.id),
+      projectName: project!.name,
+      knowledgeBrief: buildAgentKnowledgeBrief(project!.id),
     });
 
     await updateCall(call.id, { conversationIntelligence: intelligence });

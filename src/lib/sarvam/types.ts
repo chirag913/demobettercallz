@@ -17,6 +17,8 @@ export interface CreateCallParams {
   projectContext: ProjectContext;
   /** The lead's name, when the caller provided one. Never invented when absent. */
   userName?: string | null;
+  /** Server-validated Meta form data, passed only to the dedicated campaign agent. */
+  leadContext?: string;
 }
 
 export interface CreateCallResult {

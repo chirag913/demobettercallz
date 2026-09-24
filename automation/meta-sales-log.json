@@ -1,0 +1,257 @@
+{
+  "name": "BetterCallz — Completed Calls → Sales Log",
+  "active": false,
+  "nodes": [
+    {
+      "id": "every-minute",
+      "name": "Every minute",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "get-pending-results",
+      "name": "Get pending results",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        250,
+        0
+      ],
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "url": "https://demo.bettercallz.com/api/meta-leads/results",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "id": "each-result",
+      "name": "Each result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        0
+      ],
+      "parameters": {
+        "jsCode": "return ($input.first().json.results || []).map(r=>{if(!Number.isSafeInteger(r.sheet_row)||r.sheet_row<2||r.sheet_row>10000||!Array.isArray(r.sheet_payload)||r.sheet_payload.length!==26)throw new Error('Invalid output or sales log capacity reached');return {json:r};});"
+      }
+    },
+    {
+      "id": "check-existing-row",
+      "name": "Check existing row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        750,
+        0
+      ],
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1mzPVfZFtDDm4qaTCk7asGLItkvxs25VTlHj0K0w0iwg/values/Leads!A' + $json.sheet_row + ':Z' + $json.sheet_row }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "protect-previous-leads",
+      "name": "Protect previous leads",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const result=$('Each result').item.json;const existing=$json.values?.[0]||[];if(existing.some(v=>String(v)!=='') && (existing[2]!==result.meta_lead_id || existing[20]!==result.call_id))throw new Error('Allocated row belongs to another record. Restore row order; refusing to overwrite a lead.');return {json:result};"
+      }
+    },
+    {
+      "id": "write-fixed-sales-row",
+      "name": "Write fixed sales row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1250,
+        0
+      ],
+      "parameters": {
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleSheetsOAuth2Api",
+        "method": "PUT",
+        "url": "={{ 'https://sheets.googleapis.com/v4/spreadsheets/1mzPVfZFtDDm4qaTCk7asGLItkvxs25VTlHj0K0w0iwg/values/Leads!A' + $json.sheet_row + ':Z' + $json.sheet_row + '?valueInputOption=RAW' }}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {values: [$json.sheet_payload]} }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3
+    },
+    {
+      "id": "confirm-google-write",
+      "name": "Confirm Google write",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "if($json.updatedRows!==1 || !$json.updatedRange) throw new Error('Google write not confirmed');return {json:$('Protect previous leads').item.json};"
+      }
+    },
+    {
+      "id": "acknowledge-delivered-row",
+      "name": "Acknowledge delivered row",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1750,
+        0
+      ],
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "url": "https://demo.bettercallz.com/api/meta-leads/results",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {call_id:$json.call_id,sheet_row:$json.sheet_row} }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
+    },
+    {
+      "id": "output-setup",
+      "name": "Output setup",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -340
+      ],
+      "parameters": {
+        "content": "## Output only\nUse BetterCallz API Header Auth on the two BetterCallz HTTP nodes. Use Google Sheets OAuth on both Google HTTP nodes. RAW mode keeps transcript text from becoming formulas. Fixed row writes and conflict checks make retries safe. Keep Leads row order intact; use filter views. Capacity: 9,999 leads, extend the Sheet and guard before reaching it. Resend and extraction run in the existing backend, independently of Sheet acknowledgement.",
+        "height": 290,
+        "width": 620
+      }
+    }
+  ],
+  "connections": {
+    "Every minute": {
+      "main": [
+        [
+          {
+            "node": "Get pending results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get pending results": {
+      "main": [
+        [
+          {
+            "node": "Each result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Each result": {
+      "main": [
+        [
+          {
+            "node": "Check existing row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check existing row": {
+      "main": [
+        [
+          {
+            "node": "Protect previous leads",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Protect previous leads": {
+      "main": [
+        [
+          {
+            "node": "Write fixed sales row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write fixed sales row": {
+      "main": [
+        [
+          {
+            "node": "Confirm Google write",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirm Google write": {
+      "main": [
+        [
+          {
+            "node": "Acknowledge delivered row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all"
+  }
+}

@@ -84,7 +84,7 @@ export async function createLead(input: {
 
   const { data, error } = await admin
     .from("lead")
-    .insert({ project_id: lead.projectId, phone: lead.phone, name: lead.name })
+    .insert({ project_id: lead.projectId, phone: lead.phone, name: lead.name, ...(lead.projectId === "bettercallz-live" ? { source: "website_demo" } : {}) })
     .select()
     .single();
   if (error) throw new Error(`Failed to create lead: ${error.message}`);
@@ -124,7 +124,7 @@ export async function createCall(input: {
 
   if (!admin) return memoryStore.createCall(call);
 
-  const { data, error } = await admin.from("call").insert(callToRow(call)).select().single();
+  const { data, error } = await admin.from("call").insert({ ...callToRow(call), ...(call.projectId === "bettercallz-live" ? { source: "website_demo" } : {}) }).select().single();
   if (error) throw new Error(`Failed to create call: ${error.message}`);
   return callFromRow(data);
 }
