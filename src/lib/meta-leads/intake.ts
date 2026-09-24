@@ -9,9 +9,16 @@ import { type MetaLeadInput } from "./input";
 
 export async function startMetaCall(input: MetaLeadInput) {
   const admin = getSupabaseAdmin();
-  if (!admin || !getSarvamConfig(false,true)) throw new Error("Meta campaign is not configured");
+  if (!admin || !getSarvamConfig(false,true)) {
+    const required = ["SARVAM_API_KEY", "SARVAM_META_AGENT_ID", "SARVAM_PHONE_NUMBER", "SARVAM_ORG_ID", "SARVAM_WORKSPACE_ID", "SARVAM_CONNECTION_ID", "NEXT_PUBLIC_APP_URL", "SARVAM_META_APP_VERSION", "SARVAM_WEBHOOK_SECRET"];
+    console.error("Meta campaign configuration unavailable", { storage: Boolean(admin), missing: required.filter(key => !process.env[key]), validVersion: /^[1-9]\d*$/.test(process.env.SARVAM_META_APP_VERSION || "") });
+    throw new Error("Meta campaign is not configured");
+  }
   const reserved = await admin.rpc("reserve_meta_lead", { p_id: input.meta_lead_id, p_payload: input });
-  if (reserved.error || !reserved.data) throw new Error("Could not reserve Meta lead");
+  if (reserved.error || !reserved.data) {
+    console.error("Meta reservation unavailable", { code: reserved.error?.code, hasData: Boolean(reserved.data) });
+    throw new Error("Could not reserve Meta lead");
+  }
   // PostgREST can represent a composite return as a one-row array.
   const record = Array.isArray(reserved.data) ? reserved.data[0] : reserved.data;
   if (!record?.call_id || record.meta_lead_id !== input.meta_lead_id) throw new Error("Invalid Meta reservation");
