@@ -23,6 +23,21 @@ test('campaign email is distinct while reusing configured recipient',()=>{
  const ex=load('src/lib/demo-leads/extract.ts',{zod});const email=load('src/lib/demo-leads/email.ts',{'./extract':ex},{process:{env:{CONTACT_EMAIL_FROM:'from@example.com',CONTACT_EMAIL_TO:'owner@example.com',RESEND_API_KEY:'test'}}});
  const row=Object.fromEntries(ex.HEADERS.map(k=>[k,'']));row.name='Raj';row.company='XYZ';const result=email.makeMetaLeadEmail(row,'call-1','meta_123','completed');assert.equal(result.subject,'New BetterCallz Meta Lead — Raj / XYZ');assert.ok(result.text.startsWith('BETTERCALLZ META LEAD'));assert.equal(result.to[0],'owner@example.com');assert.equal(email.makeLeadEmail(row,'call-1').subject.startsWith('New BetterCallz demo lead'),true);
 });
+
+test('sparse Meta email retains form context separately and exposes prospect responses without qualifying them',()=>{
+ const ex=load('src/lib/demo-leads/extract.ts',{zod});
+ const email=load('src/lib/demo-leads/email.ts',{'./extract':ex},{process:{env:{CONTACT_EMAIL_FROM:'from@example.com',CONTACT_EMAIL_TO:'owner@example.com',RESEND_API_KEY:'test'}}});
+ const row=Object.fromEntries(ex.HEADERS.map(k=>[k,'']));row.buying_intent='Unknown';row.interest_level='Unknown';
+ const result=email.makeMetaLeadEmail(row,'call-1','meta-1','completed',{form:{name:'Form Name',email:'prospect@example.com',additional_fields:{approximate_leads_per_month:'under_50'}},durationSeconds:31,transcript:[{speaker:'agent',text:'You have a large company.'},{speaker:'prospect',text:"No, I didn't enquire."}]});
+ assert.match(result.subject,/Form Name/);assert.match(result.text,/self-reported; not confirmed/);assert.match(result.text,/prospect@example.com/);assert.match(result.text,/under 50/);assert.match(result.text,/No, I didn't enquire/);assert.match(result.text,/completed does not mean qualified/);
+ assert.doesNotMatch(result.text,/You have a large company/);assert.equal(row.name,'');assert.equal(row.buying_intent,'Unknown');assert.deepEqual(Array.from(result.to),['owner@example.com']);
+});
+
+test('Meta provider overrides template name and preserves the original context',async()=>{
+ let body;
+ const Provider=load('src/lib/sarvam/sarvam-provider.ts',{'./config':{getSarvamConfig:()=>({apiKey:'test',appId:'agent',appVersion:4,versionFilter:'specific',orgId:'org',workspaceId:'ws',connectionId:'connection',agentPhoneNumber:'+918000000000',webhookUrl:'https://example.com/webhook'})},'./agent-prompt':{buildAgentInstructions:()=>''},'@/data/publicDemo':{PUBLIC_DEMO_ID:'bettercallz-live'},'@/lib/meta-leads/constants':{META_PROJECT_ID:'bettercallz-meta'}},{process:{env:{NODE_ENV:'production'}},fetch:async(_url,options)=>{body=JSON.parse(options.body);return {ok:true,json:async()=>({attempt_id:'attempt'})};}}).SarvamVoiceProvider;
+ for(const name of ['Actual Lead',undefined]) {await new Provider().createCall({projectContext:{projectId:'bettercallz-meta'},phoneNumber:'+919999999999',callId:'call',userName:name,leadContext:'{"name":"Actual Lead"}'});assert.equal(body.app_config.agent_variables.user_name,name||'');assert.equal(body.app_config.agent_variables.lead_context,'{"name":"Actual Lead"}');assert.equal(body.app_config.app_version,4);}
+});
 test('n8n normalization handles actual unsimplified and simplified Meta payloads',()=>{
  const flow=JSON.parse(fs.readFileSync('automation/meta-instant-call.json','utf8'));
  const code=flow.nodes.find(n=>n.name==='Validate and normalize').parameters.jsCode;

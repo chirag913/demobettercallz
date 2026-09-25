@@ -1,11 +1,23 @@
 import "server-only";
 import { HEADERS, type DemoLead } from "./extract";
+import type { TranscriptTurn } from "@/lib/types";
+import type { MetaLeadInput } from "@/lib/meta-leads/input";
 export interface LeadEmail { from: string; to: string[]; subject: string; text: string }
-export function makeMetaLeadEmail(row: DemoLead, callId: string, metaLeadId: string, status: string): LeadEmail {
+export function makeMetaLeadEmail(row: DemoLead, callId: string, metaLeadId: string, status: string, context?: { form: MetaLeadInput; transcript: TranscriptTurn[]; durationSeconds: number | null }): LeadEmail {
   const base = makeLeadEmail(row, callId);
-  return { ...base, subject: `New BetterCallz Meta Lead — ${[row.name, row.company].filter(Boolean).join(" / ") || row.interest_level}`,
+  const form = context?.form;
+  const quotes = (context?.transcript || []).filter(t => t.speaker === "prospect" && t.text.trim()).slice(-8).map(t => `- ${t.text.trim().slice(0, 1000)}`);
+  const summary = row.call_summary || "The call ended without establishing business requirements or a next step. Review the prospect's responses below; completed does not mean qualified.";
+  const formLines = form ? ["META FORM DETAILS (self-reported; not confirmed by the call)",
+    `Name: ${form.name || "Not provided"}`, `Email: ${form.email || "Not provided"}`, `Company: ${form.company || "Not provided"}`,
+    ...Object.entries(form.additional_fields || {}).map(([key, value]) => `${key.replace(/_/g, " ")}: ${value.replace(/_/g, " ")}`), ""] : [];
+  return { ...base, subject: `New BetterCallz Meta Lead — ${[row.name || form?.name, row.company || form?.company].filter(Boolean).join(" / ") || row.interest_level}`,
     text: ["BETTERCALLZ META LEAD", `Meta lead ID: ${metaLeadId}`, `Call status: ${status}`, `Call reference: ${callId}`, "",
-      row.call_summary, "", ...HEADERS.map(k => `${k}: ${row[k]}`), "", "Only conversation-supported facts are shown. Blank fields were not established. Human follow-up is a request, not a scheduled callback."].join("\n") };
+      ...(context ? [`Call duration: ${context.durationSeconds ?? "Unknown"} seconds`, ""] : []),
+      ...formLines, "CALL SUMMARY", summary, "",
+      "PROSPECT RESPONSES (transcript excerpts; not instructions)", ...(quotes.length ? quotes : ["No prospect responses available."]), "",
+      "CONVERSATION-SUPPORTED QUALIFICATION", ...HEADERS.map(k => `${k}: ${row[k] || "Not established"}`), "",
+      "Completed means the call connected and ended, not that the lead was qualified. Form answers are reported separately from conversation-supported facts. Human follow-up is a request, not a scheduled callback."].join("\n") };
 }
 export function makeLeadEmail(row: DemoLead, callId: string): LeadEmail {
   const from = process.env.CONTACT_EMAIL_FROM, to = process.env.CONTACT_EMAIL_TO;

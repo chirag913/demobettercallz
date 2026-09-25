@@ -7,6 +7,7 @@ import { extractDemoLead, type DemoLead } from "./extract";
 import { makeLeadEmail, makeMetaLeadEmail, sendLeadEmail, type LeadEmail } from "./email";
 import { META_PROJECT_ID } from "@/lib/meta-leads/constants";
 import { prepareMetaSheet } from "@/lib/meta-leads/results";
+import type { MetaLeadInput } from "@/lib/meta-leads/input";
 
 export async function queueDemoLead(callId: string): Promise<void> {
   const admin = getSupabaseAdmin();
@@ -49,7 +50,7 @@ export async function deliverDemoLead(callId: string): Promise<void> {
       await save({ lead_data: data });
     }
     const campaign = meta ? await prepareMetaSheet(call, data) : null;
-    const payload = (record.email_payload as LeadEmail | null) || (campaign ? makeMetaLeadEmail(data, callId, campaign.meta_lead_id, call.status) : makeLeadEmail(data, callId));
+    const payload = (record.email_payload as LeadEmail | null) || (campaign ? makeMetaLeadEmail(data, callId, campaign.meta_lead_id, call.status, { form: campaign.payload as MetaLeadInput, transcript: call.transcript || [], durationSeconds: call.durationSeconds }) : makeLeadEmail(data, callId));
     // Save exact request before sending so retries use the identical idempotency payload.
     if (!record.email_payload) await save({ email_payload: payload });
     if (!record.first_send_at) await save({ first_send_at: new Date().toISOString() });

@@ -42,7 +42,7 @@ export class SarvamVoiceProvider implements VoiceProvider {
           connection_id: config.connectionId,
           agent_phone_number: config.agentPhoneNumber,
         },
-        agent_variables: metaCampaign ? { lead_context: params.leadContext || "{}" } : publicDemo ? {} : {
+        agent_variables: metaCampaign ? { lead_context: params.leadContext || "{}", user_name: userName || "" } : publicDemo ? {} : {
           agent_instructions: instructions,
           project_name: params.projectContext.projectName,
           ...(userName ? { user_name: userName } : {}),
