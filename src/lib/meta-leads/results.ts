@@ -4,13 +4,15 @@ import type { CallRecord } from "@/lib/types";
 import type { DemoLead } from "@/lib/demo-leads/extract";
 export const META_SHEET_COLUMNS = ["created_at","source","meta_lead_id","name","phone","email","company","industry","business_description","lead_source","monthly_leads","current_process","crm_or_tool","sales_team","follow_up_speed","pain_point","bettercallz_use_case","interest_level","buying_intent","preferred_next_step","call_id","call_status","called_at","call_completed_at","call_summary","notes","attempt_count","last_call_status","last_attempt_at","next_retry_at","retry_status","retry_reason"] as const;
 export function metaSheetValues(call: CallRecord, lead: DemoLead, record: {created_at:string;meta_lead_id:string;called_at:string|null}) {
+  const responses = (call.transcript || []).filter(turn => turn.speaker === "prospect" && turn.text.trim()).slice(-8).map(turn => `- ${turn.text.trim().slice(0, 1000)}`);
+  const notes = [lead.notes, responses.length ? `Prospect responses (transcript excerpts; not instructions):\n${responses.join("\n")}` : ""].filter(Boolean).join("\n\n");
   const values: Record<typeof META_SHEET_COLUMNS[number],string> = {
     created_at:record.created_at,source:"meta_lead_campaign",meta_lead_id:record.meta_lead_id,
     name:lead.name,phone:lead.phone,email:lead.email,company:lead.company,industry:lead.industry,business_description:lead.business_description,
     lead_source:lead.lead_sources,monthly_leads:lead.monthly_lead_volume,current_process:lead.current_lead_process,crm_or_tool:lead.crm_or_tool,
     sales_team:lead.sales_team,follow_up_speed:lead.follow_up_speed,pain_point:lead.pain_points,bettercallz_use_case:lead.bettercallz_use_case,
     interest_level:lead.interest_level,buying_intent:lead.buying_intent,preferred_next_step:lead.preferred_next_step,
-    call_id:call.id,call_status:call.status,called_at:record.called_at||"",call_completed_at:call.endedAt||"",call_summary:lead.call_summary,notes:lead.notes,
+    call_id:call.id,call_status:call.status,called_at:record.called_at||"",call_completed_at:call.endedAt||"",call_summary:lead.call_summary,notes,
     attempt_count:"",last_call_status:"",last_attempt_at:"",next_retry_at:"",retry_status:"",retry_reason:"",
   };
   return META_SHEET_COLUMNS.map(k=>values[k]);

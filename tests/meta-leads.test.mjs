@@ -23,6 +23,10 @@ test('campaign email is distinct while reusing configured recipient',()=>{
  const ex=load('src/lib/demo-leads/extract.ts',{zod});const email=load('src/lib/demo-leads/email.ts',{'./extract':ex},{process:{env:{CONTACT_EMAIL_FROM:'from@example.com',CONTACT_EMAIL_TO:'owner@example.com',RESEND_API_KEY:'test'}}});
  const row=Object.fromEntries(ex.HEADERS.map(k=>[k,'']));row.name='Raj';row.company='XYZ';const result=email.makeMetaLeadEmail(row,'call-1','meta_123','completed');assert.equal(result.subject,'New BetterCallz Meta Lead — Raj / XYZ');assert.ok(result.text.startsWith('BETTERCALLZ META LEAD'));assert.equal(result.to[0],'owner@example.com');assert.equal(email.makeLeadEmail(row,'call-1').subject.startsWith('New BetterCallz demo lead'),true);
 });
+test('Sheet notes retain prospect requests even when structured extraction is empty',()=>{
+ const r=load('src/lib/meta-leads/results.ts');const values=r.metaSheetValues({id:'call',status:'completed',transcript:[{speaker:'prospect',text:'Send me the details on WhatsApp.'},{speaker:'agent',text:'I have sent it.'}]},{notes:''},{created_at:'now',meta_lead_id:'meta',called_at:'now'});
+ assert.equal(values.length,32);assert.match(values[25],/Send me the details on WhatsApp/);assert.doesNotMatch(values[25],/I have sent it/);
+});
 
 test('sparse Meta email retains form context separately and exposes prospect responses without qualifying them',()=>{
  const ex=load('src/lib/demo-leads/extract.ts',{zod});
