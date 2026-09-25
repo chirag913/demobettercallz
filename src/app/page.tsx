@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { AppShell } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
 import { PublicDemo } from "@/components/public-demo";
+import { WhatsAppLink } from "@/components/whatsapp-link";
 import { getSarvamConfig } from "@/lib/sarvam/config";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { ArrowDown, ArrowRight, ArrowUpRight } from "lucide-react";
@@ -22,6 +23,7 @@ const steps = [
 export default function Home() {
   const available = !!getSarvamConfig(true) && isSupabaseConfigured();
   return <AppShell>
+    <WhatsAppLink />
     <section id="demo" className="mx-auto max-w-6xl scroll-mt-32 px-6 pb-16 pt-10 md:scroll-mt-24 md:pb-20 md:pt-16">
       <div className="mb-8 text-center md:mb-10">
         <p className="text-xs font-semibold tracking-[0.16em]">BETTERCALLZ</p>
