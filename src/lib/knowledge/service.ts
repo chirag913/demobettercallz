@@ -1,3 +1,4 @@
+import { SOLAR_DEMO_ID, solarProject } from '@/data/solarDemo';
 import { demoProject, DEMO_PROJECT_ID } from "@/data/demoProject";
 import { demoKnowledge } from "@/data/demoKnowledge";
 import { demoInventory } from "@/data/demoInventory";
@@ -42,6 +43,7 @@ function inventoryToFacts(units: InventoryUnit[]): KnowledgeFact[] {
 }
 
 export function getProject(projectId: string): ProjectRecord | null {
+  if (projectId === SOLAR_DEMO_ID) return solarProject;
   if (projectId === PUBLIC_DEMO_ID) return {
     ...demoProject, id: PUBLIC_DEMO_ID, name: "BetterCallz live demo", developer: "BetterCallz",
     location: "", tagline: "A conversation about your leads", configurations: "", possession: "", rera: "",
@@ -52,7 +54,7 @@ export function getProject(projectId: string): ProjectRecord | null {
 }
 
 export function listProjects(): ProjectRecord[] {
-  return [demoProject];
+  return [demoProject, solarProject];
 }
 
 export function getInventory(projectId: string): InventoryUnit[] {

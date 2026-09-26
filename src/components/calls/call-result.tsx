@@ -1,5 +1,5 @@
 "use client";
-
+import { SOLAR_DEMO_ID } from '@/data/solarDemo';
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, PhoneMissed, PhoneOutgoing } from "lucide-react";
@@ -94,7 +94,7 @@ export function CallResult({ callId, onTryAgain }: { callId: string; onTryAgain?
   }, [callId]);
 
   useEffect(() => {
-    if (!call) return;
+    if (!call || call.projectId === SOLAR_DEMO_ID) return;
     if (call.status !== "completed") return;
     if (call.conversationIntelligence) return;
     if (intelligenceRequestedRef.current) return;
@@ -186,7 +186,7 @@ export function CallResult({ callId, onTryAgain }: { callId: string; onTryAgain?
             </div>
           </div>
 
-          {call.status === "completed" &&
+          {call.status === "completed" && call.projectId !== SOLAR_DEMO_ID &&
             (call.conversationIntelligence ? (
               <ConversationIntelligenceView
                 intelligence={call.conversationIntelligence}

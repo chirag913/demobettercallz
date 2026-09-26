@@ -14,8 +14,7 @@ export default function ProjectsPage() {
         <div className="text-[11px] font-medium uppercase tracking-wide text-[var(--muted-2)]">Projects</div>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">Every project, one AI sales agent.</h1>
         <p className="mt-3 max-w-xl text-[var(--muted)]">
-          Phase 1 ships with a single seeded demo project. Adding more projects follows the same
-          Project → Intelligence → Agent pipeline.
+          Choose a project and experience its AI agent on a real phone call.
         </p>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">

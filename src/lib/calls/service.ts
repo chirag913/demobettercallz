@@ -1,3 +1,4 @@
+import { SOLAR_DEMO_ID } from '@/data/solarDemo';
 import "server-only";
 import { createLead, createCall, getCall, updateCall } from "@/lib/db/repository";
 import { getVoiceProvider, isRealMode, type ProjectContext } from "@/lib/sarvam";
@@ -32,7 +33,9 @@ export async function startCall(input: { projectId: string; phone: string; name?
   const project = getProject(input.projectId);
   if (!project) throw new CallServiceError("Project not found");
   const publicDemo = input.projectId === PUBLIC_DEMO_ID;
-  if (publicDemo && (!getSarvamConfig(true) || !isSupabaseConfigured())) {
+  const solarDemo = input.projectId === SOLAR_DEMO_ID;
+  const liveOnly = publicDemo || solarDemo;
+  if (liveOnly && (!getSarvamConfig(publicDemo, false, solarDemo) || !isSupabaseConfigured())) {
     throw new CallServiceError("The live demo is temporarily unavailable. Please contact BetterCallz to arrange a demo.");
   }
 
@@ -41,8 +44,8 @@ export async function startCall(input: { projectId: string; phone: string; name?
 
   const lead = await createLead({ projectId: input.projectId, phone: normalizedPhone, name: input.name });
 
-  const provider = publicDemo ? new SarvamVoiceProvider() : getVoiceProvider();
-  const mode: CallRecord["mode"] = publicDemo || isRealMode() ? "real" : "demo";
+  const provider = liveOnly ? new SarvamVoiceProvider() : getVoiceProvider();
+  const mode: CallRecord["mode"] = liveOnly || isRealMode() ? "real" : "demo";
 
   const call = await createCall({
     leadId: lead.id,

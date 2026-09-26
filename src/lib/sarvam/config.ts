@@ -1,3 +1,4 @@
+import { SOLAR_AGENT_ID } from '@/data/solarDemo';
 import "server-only";
 
 /**
@@ -27,9 +28,9 @@ export interface SarvamConfig {
   webhookUrl: string;
 }
 
-export function getSarvamConfig(publicDemo = false, metaCampaign = false): SarvamConfig | null {
+export function getSarvamConfig(publicDemo = false, metaCampaign = false, solarDemo = false): SarvamConfig | null {
   const apiKey = process.env.SARVAM_API_KEY;
-  const appId = metaCampaign ? process.env.SARVAM_META_AGENT_ID : publicDemo ? process.env.SARVAM_DEMO_AGENT_ID : process.env.SARVAM_AGENT_ID;
+  const appId = solarDemo ? (process.env.SARVAM_SOLAR_AGENT_ID || SOLAR_AGENT_ID) : metaCampaign ? process.env.SARVAM_META_AGENT_ID : publicDemo ? process.env.SARVAM_DEMO_AGENT_ID : process.env.SARVAM_AGENT_ID;
   const agentPhoneNumber = process.env.SARVAM_PHONE_NUMBER;
   const orgId = process.env.SARVAM_ORG_ID;
   const workspaceId = process.env.SARVAM_WORKSPACE_ID;
@@ -46,7 +47,7 @@ export function getSarvamConfig(publicDemo = false, metaCampaign = false): Sarva
   } catch {
     return null;
   }
-  const version = metaCampaign ? process.env.SARVAM_META_APP_VERSION : publicDemo ? process.env.SARVAM_DEMO_APP_VERSION : process.env.SARVAM_APP_VERSION;
+  const version = solarDemo ? process.env.SARVAM_SOLAR_APP_VERSION : metaCampaign ? process.env.SARVAM_META_APP_VERSION : publicDemo ? process.env.SARVAM_DEMO_APP_VERSION : process.env.SARVAM_APP_VERSION;
   if (metaCampaign && (!version || !/^[1-9]\d*$/.test(version) || !process.env.SARVAM_WEBHOOK_SECRET)) return null;
   const pinnedVersion = version ? Number(version) || null : null;
 

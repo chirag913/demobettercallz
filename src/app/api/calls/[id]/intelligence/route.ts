@@ -1,3 +1,4 @@
+import { SOLAR_DEMO_ID } from '@/data/solarDemo';
 import { NextRequest, NextResponse } from "next/server";
 import { getCall, updateCall } from "@/lib/db/repository";
 import { buildAgentKnowledgeBrief, getProject } from "@/lib/knowledge/service";
@@ -30,6 +31,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   if (!call || (call.projectId === META_PROJECT_ID && !isMetaAuthorized(request.headers.get("authorization")))) {
     return NextResponse.json({ error: "Call not found." }, { status: 404 });
+  }
+
+  if (call.projectId === SOLAR_DEMO_ID) {
+    return NextResponse.json({ error: "Solar call context is available in the transcript." }, { status: 422 });
   }
 
   if (call.status !== "completed") {
